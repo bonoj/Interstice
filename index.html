@@ -27,7 +27,7 @@
 <aside id="debug-tools" aria-label="Construction controls"></aside>
 <button id="exit-lighthugger" type="button" hidden aria-label="Return to the Terrordrome">↖ RETURN</button>
 <pre id="diagnostics" role="alert" hidden></pre>
-<script>globalThis.__CRUCIBLE_BUILD__="b0bf641a99273be427ec3d3382f875017301b1cf";</script>
+<script>globalThis.__CRUCIBLE_BUILD__="b65f3bd770156b9aa4ded5aca6b90cf206dac9a4";</script>
 <script>(() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
@@ -41965,23 +41965,25 @@ void main() {
     }
   };
 
-  // src/runtime/three-runtime.js
-  function createThreeRuntime({ mount: mount2, diagnostics: diagnostics2 }) {
-    const scene = new Scene(), renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 1.5));
-    renderer.outputColorSpace = SRGBColorSpace;
-    renderer.toneMapping = ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
-    renderer.localClippingEnabled = true;
-    renderer.domElement.setAttribute("aria-label", "Crucible construction world");
+  // ../../shared/runtime/three-runtime.js
+  function createThreeRuntimeCore({
+    THREE: THREE2,
+    mount: mount2,
+    onContextLost = () => {
+    },
+    rendererOptions = { antialias: true, powerPreference: "high-performance" },
+    maxPixelRatio = 1.5,
+    configureRenderer = () => {
+    }
+  }) {
+    if (!THREE2) throw new Error("THREE is required");
+    if (!mount2) throw new Error("mount is required");
+    const scene = new THREE2.Scene();
+    const renderer = new THREE2.WebGLRenderer(rendererOptions);
+    renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, maxPixelRatio));
+    renderer.outputColorSpace = THREE2.SRGBColorSpace;
+    configureRenderer(renderer, THREE2);
     mount2.append(renderer.domElement);
-    renderer.domElement.addEventListener("webglcontextlost", (e) => {
-      e.preventDefault();
-      diagnostics2.fail("WebGL context lost", "Reload to reconstruct the world.");
-    });
-    renderer.debug.onShaderError = (gl, p, v, f) => diagnostics2.fail("shader", [gl.getProgramInfoLog(p), gl.getShaderInfoLog(v), gl.getShaderInfoLog(f)].filter(Boolean).join("\n"));
     let width = 1, height = 1;
     function resize() {
       width = Math.max(1, mount2.clientWidth);
@@ -41990,12 +41992,45 @@ void main() {
     }
     const observer = new ResizeObserver(resize);
     observer.observe(mount2);
+    renderer.domElement.addEventListener("webglcontextlost", (event) => {
+      event.preventDefault();
+      onContextLost(event);
+    });
     resize();
-    return { THREE: three_module_exports, scene, renderer, size: () => ({ width, height }), render: (camera) => renderer.render(scene, camera), dispose() {
-      observer.disconnect();
-      renderer.dispose();
-      renderer.domElement.remove();
-    } };
+    return {
+      THREE: THREE2,
+      scene,
+      renderer,
+      size: () => ({ width, height }),
+      render: (camera) => renderer.render(scene, camera),
+      dispose() {
+        observer.disconnect();
+        renderer.dispose();
+        renderer.domElement.remove();
+      }
+    };
+  }
+
+  // src/runtime/three-runtime.js
+  function createThreeRuntime({ mount: mount2, diagnostics: diagnostics2 }) {
+    return createThreeRuntimeCore({
+      THREE: three_module_exports,
+      mount: mount2,
+      onContextLost: () => diagnostics2.fail("WebGL context lost", "Reload to reconstruct the world."),
+      configureRenderer: (renderer) => {
+        renderer.toneMapping = ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = PCFSoftShadowMap;
+        renderer.localClippingEnabled = true;
+        renderer.domElement.setAttribute("aria-label", "Crucible construction world");
+        renderer.debug.onShaderError = (gl, p, v, f) => diagnostics2.fail("shader", [
+          gl.getProgramInfoLog(p),
+          gl.getShaderInfoLog(v),
+          gl.getShaderInfoLog(f)
+        ].filter(Boolean).join("\n"));
+      }
+    });
   }
 
   // src/runtime/render-sync.js
