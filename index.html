@@ -27,7 +27,7 @@
 <aside id="debug-tools" aria-label="Construction controls"></aside>
 <button id="exit-lighthugger" type="button" hidden aria-label="Return to the Terrordrome">↖ RETURN</button>
 <pre id="diagnostics" role="alert" hidden></pre>
-<script>globalThis.__CRUCIBLE_BUILD__="1f083ba6238ed704175601bc760316f04138e2de";</script>
+<script>globalThis.__CRUCIBLE_BUILD__="15e1c799eaa3b3e26d3401e8915d0df395624a70";</script>
 <script>(() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
@@ -39947,7 +39947,7 @@ void main() {
         uniforms.fogDensity.value = fog.density;
       }
     }
-    function refreshMaterialUniforms(uniforms, material, pixelRatio, height, transmissionRenderTarget) {
+    function refreshMaterialUniforms(uniforms, material, pixelRatio2, height, transmissionRenderTarget) {
       if (material.isMeshBasicMaterial) {
         refreshUniformsCommon(uniforms, material);
       } else if (material.isMeshLambertMaterial) {
@@ -39980,7 +39980,7 @@ void main() {
           refreshUniformsDash(uniforms, material);
         }
       } else if (material.isPointsMaterial) {
-        refreshUniformsPoints(uniforms, material, pixelRatio, height);
+        refreshUniformsPoints(uniforms, material, pixelRatio2, height);
       } else if (material.isSpriteMaterial) {
         refreshUniformsSprites(uniforms, material);
       } else if (material.isShadowMaterial) {
@@ -40082,10 +40082,10 @@ void main() {
       uniforms.totalSize.value = material.dashSize + material.gapSize;
       uniforms.scale.value = material.scale;
     }
-    function refreshUniformsPoints(uniforms, material, pixelRatio, height) {
+    function refreshUniformsPoints(uniforms, material, pixelRatio2, height) {
       uniforms.diffuse.value.copy(material.color);
       uniforms.opacity.value = material.opacity;
-      uniforms.size.value = material.size * pixelRatio;
+      uniforms.size.value = material.size * pixelRatio2;
       uniforms.scale.value = height * 0.5;
       if (material.map) {
         uniforms.map.value = material.map;
@@ -40656,12 +40656,12 @@ void main() {
       this.getDrawingBufferSize = function(target) {
         return target.set(_width * _pixelRatio, _height * _pixelRatio).floor();
       };
-      this.setDrawingBufferSize = function(width, height, pixelRatio) {
+      this.setDrawingBufferSize = function(width, height, pixelRatio2) {
         _width = width;
         _height = height;
-        _pixelRatio = pixelRatio;
-        canvas.width = Math.floor(width * pixelRatio);
-        canvas.height = Math.floor(height * pixelRatio);
+        _pixelRatio = pixelRatio2;
+        canvas.width = Math.floor(width * pixelRatio2);
+        canvas.height = Math.floor(height * pixelRatio2);
         this.setViewport(0, 0, width, height);
       };
       this.getCurrentViewport = function(target) {
@@ -41966,6 +41966,9 @@ void main() {
   };
 
   // ../../shared/runtime/three-runtime.js
+  function pixelRatio(maxPixelRatio) {
+    return Math.min(globalThis.devicePixelRatio || 1, maxPixelRatio);
+  }
   function createThreeRuntimeCore({
     THREE: THREE2,
     mount: mount2,
@@ -41980,7 +41983,7 @@ void main() {
     if (!mount2) throw new Error("mount is required");
     const scene = new THREE2.Scene();
     const renderer = new THREE2.WebGLRenderer(rendererOptions);
-    renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, maxPixelRatio));
+    renderer.setPixelRatio(pixelRatio(maxPixelRatio));
     renderer.outputColorSpace = THREE2.SRGBColorSpace;
     configureRenderer(renderer, THREE2);
     mount2.append(renderer.domElement);
