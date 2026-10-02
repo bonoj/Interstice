@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="798c31fd" data-repository-sha="798c31fd68b7c2e651998d9f8e1ab93e4fe050b7"><script>globalThis.__REPOSITORY_SHA__="798c31fd68b7c2e651998d9f8e1ab93e4fe050b7";globalThis.__REPOSITORY_BUILD__="798c31fd";</script><script>(()=>{
+<body data-repository-build="152c6816" data-repository-sha="152c68167045eb4f3596e87d31321d3a82dd9ba7"><script>globalThis.__REPOSITORY_SHA__="152c68167045eb4f3596e87d31321d3a82dd9ba7";globalThis.__REPOSITORY_BUILD__="152c6816";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1686,7 +1686,7 @@ function ensureWorkshopBearings(){
   if(workshopBearings)return workshopBearings;
   const terrain=ensureWorkshopTerrain();
   if(!terrain||typeof createBearingSystem!=='function')return null;
-  workshopBearingOwner=new THREE.Group();workshopBearingOwner.name='workshop:crucible-bearings-owner';scene.add(workshopBearingOwner);
+  workshopBearingOwner=new THREE.Group();workshopBearingOwner.name='workshop:crucible-bearings-owner';workshopTerrain.owner.add(workshopBearingOwner);
   const world=createWorld(),Locus=world.component('Locus');
   globalThis.__workshopBearingOwner=workshopBearingOwner;
   try{workshopBearings=createBearingSystem({world,components:{Locus},THREE,scene,terrain,locus:'workshop',liquids:[]})}
@@ -1723,7 +1723,7 @@ function chooseWorkshopCrucibleTool(tool,button){
 function installWorkshopCrucibleSpells(){
   const shell=globalThis.RepositoryShell;if(!shell||shell.inspect().tools.includes('crucible-terrain-next'))return;
   shell.registerTool({id:'crucible-terrain-next',text:'⛰️',label:'Next deterministic terrain',onClick:()=>WorkshopTerrain.next()});
-  shell.registerTool({id:'crucible-bearings',text:'⚫️',label:'Spawn 25 bearings at tapped point; tap again for 25 thousand',onClick:b=>{if(workshopCrucibleTool==='bearing-packet'||workshopCrucibleTool==='bearings-many')workshopBearingMagnitude=workshopBearingMagnitude?0:1;else workshopBearingMagnitude=0;chooseWorkshopCrucibleTool(workshopBearingMagnitude?'bearings-many':'bearing-packet',b);b.textContent=workshopBearingMagnitude?'⚫️⚫️':'⚫️'}});
+  shell.registerTool({id:'crucible-bearings',text:'⚫️',label:'Spawn 25 bearings at tapped point; tap again for 25 thousand',onClick:b=>{if(workshopCrucibleTool==='bearing-packet'||workshopCrucibleTool==='bearings-many')workshopBearingMagnitude=workshopBearingMagnitude?0:1;else workshopBearingMagnitude=0;chooseWorkshopCrucibleTool(workshopBearingMagnitude?'bearings-many':'bearing-packet',b);b.textContent='⚫️';b.style.fontSize=workshopBearingMagnitude?'1.9rem':'.9rem';b.setAttribute('aria-label',workshopBearingMagnitude?'Spawn 25 thousand bearings at tapped point':'Spawn 25 bearings at tapped point')}});
   shell.registerTool({id:'crucible-water',text:'💧',label:'Place transport source at tapped point',onClick:b=>chooseWorkshopCrucibleTool('source',b)});
   shell.registerTool({id:'crucible-lava',text:'🌋',label:'Place lava at tapped point',onClick:b=>chooseWorkshopCrucibleTool('lava',b)});
   shell.registerTool({id:'crucible-carve',text:'⛏️',label:'Carve terrain at tapped point',onClick:b=>chooseWorkshopCrucibleTool('carve',b)});
@@ -2893,6 +2893,7 @@ renderer.setAnimationLoop((now)=>{
   if(contentWorkshopHidden){
     updateWorkshop(now);
     if(workshopWater||workshopLava){workshopWater?.update(now);workshopLava?.update(now)}
+    if(workshopBearings){const bearingDt=Math.min(.15,Math.max(.001,(now-workshopBearingLast)/1000));workshopBearingLast=now;workshopBearings.update(bearingDt)}else workshopBearingLast=now;
     renderer.render(scene,camera);window.vestibuleDirty=false;
     return;
   }
