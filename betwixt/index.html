@@ -61,12 +61,12 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="0c8eda5e" data-repository-sha="0c8eda5ee8c8a713da6ec4eeecdfca86d028c868"><script>globalThis.__REPOSITORY_SHA__="0c8eda5ee8c8a713da6ec4eeecdfca86d028c868";globalThis.__REPOSITORY_BUILD__="0c8eda5e";</script><script>(()=>{
+<body data-repository-build="0acae1e9" data-repository-sha="0acae1e9691301e31805676a6e895081d723addf"><script>globalThis.__REPOSITORY_SHA__="0acae1e9691301e31805676a6e895081d723addf";globalThis.__REPOSITORY_BUILD__="0acae1e9";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
     resident:[
-      {id:"refresh",text:"🔄",label:"Refresh",onClick:()=>location.reload()},
+      {id:"refresh",text:"🔄",label:"Refresh",onClick:freshArrival},
       {id:"workshop",text:"🛠",label:"Workshop",onClick:toggleWorkshop}
     ]
   };
@@ -209,6 +209,14 @@ select{width:100%;padding:0 12px;appearance:auto}
     button?.setAttribute("aria-pressed",tinkered?"true":"false");
     const lift=registered.get("lift");
     if(lift){lift.classList.remove("active");lift.setAttribute("aria-pressed","false");lift.textContent="⬆️"}
+  }
+
+  function freshArrival(){
+    try{sessionStorage.removeItem("worldLab.worldState.v1")}catch(_){}
+    const url=new URL(location.href);
+    for(const key of [...url.searchParams.keys()])if(key!=="build")url.searchParams.delete(key);
+    url.hash="";
+    location.replace(url);
   }
 
   function toggleWorkshop(button){
