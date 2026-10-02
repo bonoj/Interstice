@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="1b4e7ce1" data-repository-sha="1b4e7ce12c7972d855d72f4d176f31c585f60869"><script>globalThis.__REPOSITORY_SHA__="1b4e7ce12c7972d855d72f4d176f31c585f60869";globalThis.__REPOSITORY_BUILD__="1b4e7ce1";</script><script>(()=>{
+<body data-repository-build="26481a83" data-repository-sha="26481a83f3b2ad4629c0be6b79c7fc5cf557612d"><script>globalThis.__REPOSITORY_SHA__="26481a83f3b2ad4629c0be6b79c7fc5cf557612d";globalThis.__REPOSITORY_BUILD__="26481a83";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1850,14 +1850,35 @@ function makeTentacle(){
   return g;
 }
 
+function makeSixRingSphere(){
+  const g=makeGeosphere();
+  const ringGeometry=new THREE.TorusGeometry(.18,.04,8,24);
+  function port(position,rotation){
+    const r=new THREE.Mesh(ringGeometry,brassMaterial);
+    r.position.copy(position);
+    r.rotation.set(...rotation);
+    g.add(r);
+  }
+  // Two top rings, four evenly around the equator.
+  port(new THREE.Vector3(-.28,.86,0),[Math.PI/2,0,0]);
+  port(new THREE.Vector3(.28,.86,0),[Math.PI/2,0,0]);
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/2;
+    const x=Math.cos(a)*.90,z=Math.sin(a)*.90;
+    port(new THREE.Vector3(x,0,z),[0,a+Math.PI/2,0]);
+  }
+  return g;
+}
+
 const specimens=[
   ['geosphere',makeGeosphere()],
   ['octonut',makeOctonut(.42)],
   ['ring',makeRing()],
   ['gimbal-cage',makeGimbalCage()],
-  ['tentacle',makeTentacle()]
+  ['tentacle',makeTentacle()],
+  ['six-ring-sphere',makeSixRingSphere()]
 ];
-const specimenX=[-4,-2,0,2,4];
+const specimenX=[-5,-3,-1,1,3,5];
 for(let i=0;i<specimens.length;i++){
   const [name,obj]=specimens[i];
   obj.name='workshop:'+name;
