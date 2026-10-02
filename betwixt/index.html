@@ -59,13 +59,14 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="b4035e10" data-repository-sha="b4035e10ca2faecf361e8ae2a2c87dcc340fe2d9"><script>globalThis.__REPOSITORY_SHA__="b4035e10ca2faecf361e8ae2a2c87dcc340fe2d9";globalThis.__REPOSITORY_BUILD__="b4035e10";</script><script>(()=>{
+<body data-repository-build="7fde384d" data-repository-sha="7fde384d4663f9e9a237d212f55bacb89c365cd8"><script>globalThis.__REPOSITORY_SHA__="7fde384d4663f9e9a237d212f55bacb89c365cd8";globalThis.__REPOSITORY_BUILD__="7fde384d";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
       {id:"spin",text:"🪄",label:"Spin presences",onClick:spinPresences}
     ],
     resident:[
+      {id:"workshop",text:"🛠",label:"Lift Betwixt content",onClick:toggleBetwixtContent},
       {id:"refresh",text:"🔄",label:"Reload",onClick:()=>location.reload()}
     ]
   };
@@ -133,6 +134,14 @@ select{width:100%;padding:0 12px;appearance:auto}
   function removeTool(id){
     registered.get(id)?.remove();
     registered.delete(id);
+  }
+
+  function toggleBetwixtContent(button){
+    const world=globalThis.vestibule;
+    if(!world?.toggleContentRaised)return;
+    const raised=world.toggleContentRaised();
+    button?.classList.toggle("active",raised);
+    button?.setAttribute("aria-pressed",raised?"true":"false");
   }
 
   function spinPresences(){
@@ -522,6 +531,12 @@ const C={
   JupurnIdentity:ecs.component('JupurnIdentity')
 };
 
+// The current six-toy arrangement is content in Betwixt, not Betwixt itself.
+// This zeroed parent earns one operation: move the intact organism as a unit.
+const betwixtContent=new THREE.Group();
+betwixtContent.name='BetwixtContent';
+scene.add(betwixtContent);
+
 const presenceMat=new THREE.MeshStandardMaterial({color:0xf0f0ed,roughness:.68,metalness:.04});
 const PRESENCES=[
   {lab:{slug:'Foundry',name:'Foundry',url:'https://bonoj.github.io/Foundry/',github:'https://github.com/bonoj/Foundry'}},
@@ -539,7 +554,7 @@ const presenceEntities=PRESENCES.map((entry,slot)=>{
   g.add(hitShell);
   const ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.018,8,48),
     new THREE.MeshBasicMaterial({color:0x66727c,transparent:true,opacity:.58}));
-  ring.rotation.x=Math.PI/2;ring.position.y=-.62;g.add(ring);scene.add(g);
+  ring.rotation.x=Math.PI/2;ring.position.y=-.62;g.add(ring);betwixtContent.add(g);
 
   ecs.add(id,C.Presence,{slot});
   if(entry.lab){
@@ -1236,7 +1251,7 @@ const jupurnHitShell=new THREE.Mesh(
   new THREE.MeshBasicMaterial({visible:false})
 );
 jupurn.add(jupurnHitShell);
-scene.add(jupurn);
+betwixtContent.add(jupurn);
 const jupurnEntity=ecs.entity();
 ecs.add(jupurnEntity,C.JupurnIdentity,{name:'Jupurn'});
 ecs.add(jupurnEntity,C.Transform,{
@@ -1363,6 +1378,22 @@ let radius=14,theta=.18,phi=1.18;
 let lastPortrait=innerHeight>innerWidth*1.12;
 let selectedEntity=null;updateLabLabel();
 let presenceMotion=null;
+
+// 🛠 currently means only this: lift the intact content organism out of the way,
+// or return it exactly. The meaning is intentionally allowed to change later.
+const CONTENT_LIFT_Y=13.5;
+let contentRaised=false;
+let contentLiftMotion=null;
+function setContentRaised(raised){
+  raised=!!raised;
+  const from=betwixtContent.position.y;
+  const to=raised?CONTENT_LIFT_Y:0;
+  contentRaised=raised;
+  contentLiftMotion={from,to,started:performance.now(),duration:620};
+  window.vestibuleDirty=true;
+  return contentRaised;
+}
+function toggleContentRaised(){return setContentRaised(!contentRaised)}
 const raycaster=new THREE.Raycaster();
 const pointerNDC=new THREE.Vector2();
 const tapStarts=new Map();
@@ -1797,6 +1828,12 @@ addEventListener('resize',()=>{
 });
 
 renderer.setAnimationLoop((now)=>{
+  if(contentLiftMotion){
+    const m=contentLiftMotion,raw=Math.min(1,(now-m.started)/m.duration),t=easeQuiet(raw);
+    betwixtContent.position.y=THREE.MathUtils.lerp(m.from,m.to,t);
+    window.vestibuleDirty=true;
+    if(raw>=1){betwixtContent.position.y=m.to;contentLiftMotion=null}
+  }
   JupurnSystem(now);
   ExchangeSystem(now);
   OrbitalSystem(now);
@@ -1862,7 +1899,10 @@ addEventListener('pageshow',e=>{
 });
 
 window.vestibule={
-  scene,camera,renderer,presences,
+  scene,camera,renderer,presences,betwixtContent,
+  get contentRaised(){return contentRaised},
+  setContentRaised,
+  toggleContentRaised,
   get layout(){return 'Ring'},
   get selected(){return selectedEntity?C.Presence.get(selectedEntity).slot:null},
   home,
