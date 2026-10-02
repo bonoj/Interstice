@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="e2ef7875" data-repository-sha="e2ef7875a1fa0d1c8a11c3a2c06dd477d4ad04ed"><script>globalThis.__REPOSITORY_SHA__="e2ef7875a1fa0d1c8a11c3a2c06dd477d4ad04ed";globalThis.__REPOSITORY_BUILD__="e2ef7875";</script><script>(()=>{
+<body data-repository-build="fe215284" data-repository-sha="fe215284561975a866286277f56ae3f8caec07c3"><script>globalThis.__REPOSITORY_SHA__="fe215284561975a866286277f56ae3f8caec07c3";globalThis.__REPOSITORY_BUILD__="fe215284";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1809,7 +1809,9 @@ const workshopCrucibleOrbRing=new THREE.Mesh(
 workshopCrucibleOrbRing.rotation.x=Math.PI/2;
 workshopCrucibleOrbRing.position.y=-.46;
 workshopCrucibleOrb.add(workshopCrucibleOrbRing);
-workshopCrucibleOrb.position.set(-4.6,GROUND_Y+.48,2.8);
+// Share Jupurn's world-space XZ. The orb remains on the Workshop floor.
+const workshopJupurnXZ=C.Transform.get(jupurnEntity).position;
+workshopCrucibleOrb.position.set(workshopJupurnXZ.x,GROUND_Y+.48,workshopJupurnXZ.z);
 workshopCrucibleOrb.visible=false;
 scene.add(workshopCrucibleOrb);
 function tapWorkshopCrucibleOrb(){
