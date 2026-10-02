@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="7a155c3d" data-repository-sha="7a155c3d11ed1ad5036e60402eacc909c0b89331"><script>globalThis.__REPOSITORY_SHA__="7a155c3d11ed1ad5036e60402eacc909c0b89331";globalThis.__REPOSITORY_BUILD__="7a155c3d";</script><script>(()=>{
+<body data-repository-build="b1a8eb98" data-repository-sha="b1a8eb98b1aeb6f924bea6171169f30c74b5bf44"><script>globalThis.__REPOSITORY_SHA__="b1a8eb98b1aeb6f924bea6171169f30c74b5bf44";globalThis.__REPOSITORY_BUILD__="b1a8eb98";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1850,6 +1850,27 @@ function makeOctonut(n=.42){
   return mesh;
 }
 
+function makeSixNutSphere(radius=.92,n=.42){
+  const g=new THREE.Group();
+  const sphere=new THREE.Mesh(new THREE.SphereGeometry(radius,40,28),glassMaterial);
+  g.add(sphere);
+  const directions=[
+    new THREE.Vector3(1,0,0),new THREE.Vector3(-1,0,0),
+    new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,-1),
+    new THREE.Vector3(0,1,0),new THREE.Vector3(0,-1,0)
+  ];
+  const yAxis=new THREE.Vector3(0,1,0);
+  for(const direction of directions){
+    const nut=makeOctonut(n);
+    // Nut depth axis follows the surface normal. Its center lies on the sphere
+    // boundary: exactly half its depth is inset and half is proud.
+    nut.quaternion.setFromUnitVectors(yAxis,direction);
+    nut.position.copy(direction).multiplyScalar(radius);
+    g.add(nut);
+  }
+  return g;
+}
+
 function makeRing(radius=.72,tube=.055){
   const mesh=new THREE.Mesh(new THREE.TorusGeometry(radius,tube,8,32),brassMaterial);
   mesh.rotation.x=Math.PI/2; // canonical instance shown horizontal
@@ -1887,9 +1908,10 @@ const specimens=[
   ['octonut',makeOctonut(.42)],
   ['ring',makeRing()],
   ['gimbal-cage',makeGimbalCage()],
-  ['tentacle',makeTentacle()]
+  ['tentacle',makeTentacle()],
+  ['six-nut-sphere',makeSixNutSphere()]
 ];
-const specimenX=[-4,-2,0,2,4];
+const specimenX=[-5,-3,-1,1,3,5];
 let focusedWorkshopObject=null,workshopFocusMotion=null,workshopObserverReturn=null;
 function floorWorkshopObject(obj){
   obj.updateMatrixWorld(true);
