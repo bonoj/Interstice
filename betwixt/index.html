@@ -61,13 +61,14 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="aec1e38d" data-repository-sha="aec1e38da518021e263469693ab040848989add7"><script>globalThis.__REPOSITORY_SHA__="aec1e38da518021e263469693ab040848989add7";globalThis.__REPOSITORY_BUILD__="aec1e38d";</script><script>(()=>{
+<body data-repository-build="6c59a110" data-repository-sha="6c59a11006bbbeb1d6ad96609d93d864aa8f2b57"><script>globalThis.__REPOSITORY_SHA__="6c59a11006bbbeb1d6ad96609d93d864aa8f2b57";globalThis.__REPOSITORY_BUILD__="6c59a110";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
       {id:"spin",text:"🪄",label:"Spin presences",onClick:spinPresences},
       {id:"marble",text:"⚪️",label:"Compact Betwixt content",onClick:marbleBetwixtContent},
       {id:"crucible",text:"⚗️",label:"Summon intact Crucible",onClick:toggleCrucible},
+      {id:"arcball",text:"🧭",label:"Arcball navigation",onClick:toggleArcball},
       {id:"crayon",text:"🖍",label:"Crayon",onClick:toggleCrayon,onDoubleClick:clearCrayon,onLongPress:exportCrayon,onContextMenu:exportCrayon}
     ],
     resident:[
@@ -217,6 +218,11 @@ select{width:100%;padding:0 12px;appearance:auto}
     marble?.classList.remove("active");marble?.setAttribute("aria-pressed","false");
   }
 
+  function toggleArcball(button){
+    const world=globalThis.vestibule;if(!world?.toggleArcball)return;
+    const active=world.toggleArcball();
+    button?.classList.toggle("active",active);button?.setAttribute("aria-pressed",active?"true":"false");
+  }
   function toggleCrayon(button){
     const world=globalThis.vestibule;if(!world?.toggleCrayon)return;
     const active=world.toggleCrayon();
@@ -528,6 +534,7 @@ window.vestibuleWatch=setTimeout(()=>{
 
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { ArcballControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/ArcballControls.js';
 
 const scene=new THREE.Scene();
 const WORLD_RADIUS=58;
@@ -2221,6 +2228,38 @@ inkCanvas.addEventListener('pointercancel',finishInkPointer);
 sizeInk();
 
 const canvas=renderer.domElement, pointers=new Map();
+const arcball=new ArcballControls(camera,canvas,scene);
+arcball.enabled=false;
+arcball.enableAnimations=true;
+arcball.enableGrid=false;
+arcball.setGizmosVisible(false);
+let arcballActive=false;
+arcball.addEventListener('change',()=>{window.vestibuleDirty=true});
+function syncObserverFromCamera(){
+  target.copy(arcball.target);
+  const off=camera.position.clone().sub(target);
+  radius=off.length();
+  if(radius>1e-6){
+    phi=Math.acos(THREE.MathUtils.clamp(off.y/radius,-1,1));
+    theta=Math.atan2(off.x,off.z);
+  }
+}
+function setArcball(on){
+  on=!!on;
+  if(on===arcballActive)return arcballActive;
+  pointers.clear();tapStarts.clear();pinch=null;pinchCentroid=null;
+  if(on){
+    arcball.target.copy(target);
+    arcball.update();
+    arcball.enabled=true;
+  }else{
+    syncObserverFromCamera();
+    arcball.enabled=false;
+  }
+  arcballActive=on;window.vestibuleDirty=true;return arcballActive;
+}
+function toggleArcball(){return setArcball(!arcballActive)}
+
 let pinch=null,pinchCentroid=null;
 const centroid=a=>({x:a.reduce((s,p)=>s+p.x,0)/a.length,y:a.reduce((s,p)=>s+p.y,0)/a.length});
 function panPixels(dx,dy,gain=.8){
@@ -2529,11 +2568,13 @@ const SelectionSystem={
   }
 };
 canvas.addEventListener('pointerdown',e=>{
+  if(arcballActive)return;
   canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   tapStarts.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now()});
   if(pointers.size===2){const a=[...pointers.values()];pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchCentroid=centroid(a)}
 });
 canvas.addEventListener('pointermove',e=>{
+  if(arcballActive)return;
   if(!pointers.has(e.pointerId))return;
   const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   const a=[...pointers.values()];
@@ -2549,6 +2590,7 @@ canvas.addEventListener('pointermove',e=>{
   }
 });
 canvas.addEventListener('pointerup',e=>{
+  if(arcballActive)return;
   const start=tapStarts.get(e.pointerId);
   if(start){
     const travel=Math.hypot(e.clientX-start.x,e.clientY-start.y);
@@ -2560,7 +2602,7 @@ canvas.addEventListener('pointerup',e=>{
 canvas.addEventListener('pointercancel',e=>clearPointer(e.pointerId));
 canvas.addEventListener('lostpointercapture',e=>clearPointer(e.pointerId));
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
-canvas.addEventListener('wheel',e=>{e.preventDefault();radius*=Math.exp(e.deltaY*.001);applyCamera()},{passive:false});
+canvas.addEventListener('wheel',e=>{if(arcballActive)return;e.preventDefault();radius*=Math.exp(e.deltaY*.001);applyCamera()},{passive:false});
 
 addEventListener('keydown',e=>{if(e.key==='Home')home()});
 addEventListener('resize',()=>{
@@ -2684,6 +2726,9 @@ window.vestibule={
   setContentWorkshopHidden,
   toggleContentWorkshopHidden,
   get crayonActive(){return crayonActive},
+  get arcballActive(){return arcballActive},
+  setArcball,
+  toggleArcball,
   setCrayon,
   toggleCrayon,
   clearCrayon:clearInk,
