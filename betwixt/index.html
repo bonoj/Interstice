@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="59bf2e3e" data-repository-sha="59bf2e3e4ac858e6e7d7c338aa8521f3986232a3"><script>globalThis.__REPOSITORY_SHA__="59bf2e3e4ac858e6e7d7c338aa8521f3986232a3";globalThis.__REPOSITORY_BUILD__="59bf2e3e";</script><script>(()=>{
+<body data-repository-build="259f0ba9" data-repository-sha="259f0ba9656ba0e173ada1f998ac97d1381a3443"><script>globalThis.__REPOSITORY_SHA__="259f0ba9656ba0e173ada1f998ac97d1381a3443";globalThis.__REPOSITORY_BUILD__="259f0ba9";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2263,7 +2263,10 @@ function refreshGrimoireLava(){
 }
 function spawnGrimoireLavaBearing(){
   const wet=[];grimoireLava.forEachWetCell(q=>wet.push(q));if(!wet.length)return;const q=wet[(Math.random()*wet.length)|0],n=grimoireSurfacePoint(q.x,q.z,0,new THREE.Vector3()).normalize(),mesh=new THREE.Mesh(grimoireBearingGeo,grimoireBearingMat);mesh.position.copy(n).multiplyScalar(GRIMOIRE_R+.09);localGravityOrb.add(mesh);
-  const tangent=new THREE.Vector3().randomDirection();tangent.addScaledVector(n,-tangent.dot(n)).normalize(),speed=.28+Math.random()*.52,lift=.65+Math.random()*.8;
+  const tangent=new THREE.Vector3().randomDirection();
+  tangent.addScaledVector(n,-tangent.dot(n)).normalize();
+  const speed=.28+Math.random()*.52;
+  const lift=.65+Math.random()*.8;
   grimoireBearings.push({mesh,velocity:tangent.multiplyScalar(speed).addScaledVector(n,lift)});
 }
 function updateGrimoireLava(now,dt){
