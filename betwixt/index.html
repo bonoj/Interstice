@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="eecea571" data-repository-sha="eecea571ac24d37acaf52bf562e8de857da1616a"><script>globalThis.__REPOSITORY_SHA__="eecea571ac24d37acaf52bf562e8de857da1616a";globalThis.__REPOSITORY_BUILD__="eecea571";</script><script>(()=>{
+<body data-repository-build="ce94a944" data-repository-sha="ce94a944df9e1796f45de235536f6cb70716ce57"><script>globalThis.__REPOSITORY_SHA__="ce94a944df9e1796f45de235536f6cb70716ce57";globalThis.__REPOSITORY_BUILD__="ce94a944";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1826,17 +1826,12 @@ const octonutMaterial=new THREE.MeshStandardMaterial({
   metalness:.84
 });
 function addOctonut(parent,y){
-  const outer=new THREE.CylinderGeometry(.12,.12,.16,8,1,false);
-  const inner=new THREE.CylinderGeometry(.0525,.0525,.18,8,1,false);
-  // Bottom is canonical. Top is the same complete fitting rotated through 180 degrees.
-  const fitting=new THREE.Group();
-  const nut=new THREE.Mesh(outer,octonutMaterial);
-  fitting.add(nut);
-  const bore=new THREE.Mesh(inner,new THREE.MeshStandardMaterial({color:0x3b2a18,roughness:.35,metalness:.45}));
-  bore.position.y=-.081;
-  fitting.add(bore);
+  // One fitting, twice: identical geometry and identical intersection depth.
+  const fitting=new THREE.Mesh(
+    new THREE.CylinderGeometry(.12,.12,.16,8,1,false),
+    octonutMaterial
+  );
   fitting.position.y=y;
-  if(y>0) fitting.rotation.z=Math.PI;
   parent.add(fitting);
 }
 addOctonut(baubleB,.92);
