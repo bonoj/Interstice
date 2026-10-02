@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="36968131" data-repository-sha="3696813133beb7a15b9734c4bae85cc6fbf4b953"><script>globalThis.__REPOSITORY_SHA__="3696813133beb7a15b9734c4bae85cc6fbf4b953";globalThis.__REPOSITORY_BUILD__="36968131";</script><script>(()=>{
+<body data-repository-build="a6c72d39" data-repository-sha="a6c72d39c280252f0e27bbb1759dfbbbf7909036"><script>globalThis.__REPOSITORY_SHA__="a6c72d39c280252f0e27bbb1759dfbbbf7909036";globalThis.__REPOSITORY_BUILD__="a6c72d39";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1800,14 +1800,13 @@ const geodesicGlass=new THREE.MeshStandardMaterial({
   roughness:.08,
   metalness:0,
   depthWrite:false,
-  side:THREE.DoubleSide,
-  flatShading:true
+  side:THREE.DoubleSide
 });
-const geodesicGeometry=new THREE.IcosahedronGeometry(.92,2);
+const geodesicGeometry=new THREE.SphereGeometry(.92,18,12);
 const geodesicShell=new THREE.Mesh(geodesicGeometry,geodesicGlass);
 geodesicBauble.add(geodesicShell);
 const geodesicEdges=new THREE.LineSegments(
-  new THREE.EdgesGeometry(geodesicGeometry,1),
+  new THREE.EdgesGeometry(new THREE.SphereGeometry(.92,10,7)),
   new THREE.LineBasicMaterial({color:0x667879,transparent:true,opacity:.62})
 );
 geodesicBauble.add(geodesicEdges);
