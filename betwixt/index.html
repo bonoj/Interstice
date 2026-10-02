@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="ce94a944" data-repository-sha="ce94a944df9e1796f45de235536f6cb70716ce57"><script>globalThis.__REPOSITORY_SHA__="ce94a944df9e1796f45de235536f6cb70716ce57";globalThis.__REPOSITORY_BUILD__="ce94a944";</script><script>(()=>{
+<body data-repository-build="526849e2" data-repository-sha="526849e236f73507a20e56870683dcf3272eb47c"><script>globalThis.__REPOSITORY_SHA__="526849e236f73507a20e56870683dcf3272eb47c";globalThis.__REPOSITORY_BUILD__="526849e2";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1815,27 +1815,20 @@ baubleA.name='workshop:A';
 baubleA.position.set(-1.45,.92,0);
 workshopField.add(baubleA);
 
-// B — A plus two warm-golden brass octonuts inset through the polar vertices.
-const baubleB=makeBauble();
-baubleB.name='workshop:B';
-baubleB.position.set(1.45,.92,0);
-workshopField.add(baubleB);
+// Standalone octagonal n × n × n specimen.
 const octonutMaterial=new THREE.MeshStandardMaterial({
   color:0xe0a43b,
   roughness:.22,
   metalness:.84
 });
-function addOctonut(parent,y){
-  // One fitting, twice: identical geometry and identical intersection depth.
-  const fitting=new THREE.Mesh(
-    new THREE.CylinderGeometry(.12,.12,.16,8,1,false),
-    octonutMaterial
-  );
-  fitting.position.y=y;
-  parent.add(fitting);
-}
-addOctonut(baubleB,.92);
-addOctonut(baubleB,-.92);
+const octonutN=.42;
+const octonut=new THREE.Mesh(
+  new THREE.CylinderGeometry(octonutN/2,octonutN/2,octonutN,8,1,false),
+  octonutMaterial
+);
+octonut.name='workshop:octagonal-n-cube';
+octonut.position.set(1.45,octonutN/2,0);
+workshopField.add(octonut);
 
 function resetWorkshopGlass(){}
 function updateWorkshop(now){
