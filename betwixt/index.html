@@ -64,8 +64,11 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="299b828e" data-repository-sha="299b828e3cc3957546ed3f4343abea7131331d6d"><script>globalThis.__REPOSITORY_SHA__="299b828e3cc3957546ed3f4343abea7131331d6d";globalThis.__REPOSITORY_BUILD__="299b828e";</script><script>(()=>{
+<body data-repository-build="647e714a" data-repository-sha="647e714a807cfae61d2681e0f3a7a0d22e2a5f0d"><script>globalThis.__REPOSITORY_SHA__="647e714a807cfae61d2681e0f3a7a0d22e2a5f0d";globalThis.__REPOSITORY_BUILD__="647e714a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
+  const spellbook=[
+    {id:"refresh",text:"🔄",label:"Reload",onClick:()=>location.reload()}
+  ];
   const build=globalThis.__REPOSITORY_BUILD__||"local";
   const sha=globalThis.__REPOSITORY_SHA__||null;
 
@@ -122,10 +125,11 @@ select{width:100%;padding:0 12px;appearance:auto}
     registered.delete(id);
   }
 
-  registerTool({id:"refresh",text:"🔄",label:"Reload",onClick:()=>location.reload()});
+  for(const spell of spellbook)registerTool(spell);
 
   globalThis.RepositoryShell={
     place,
+    spellbook,
     build,
     sha,
     status,
