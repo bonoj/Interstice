@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="a6868be3" data-repository-sha="a6868be31ca933b810e5168d727b9004b3e1d153"><script>globalThis.__REPOSITORY_SHA__="a6868be31ca933b810e5168d727b9004b3e1d153";globalThis.__REPOSITORY_BUILD__="a6868be3";</script><script>(()=>{
+<body data-repository-build="a4b70a13" data-repository-sha="a4b70a13eb925020f132bc2970aeed7ce7897edb"><script>globalThis.__REPOSITORY_SHA__="a4b70a13eb925020f132bc2970aeed7ce7897edb";globalThis.__REPOSITORY_BUILD__="a4b70a13";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1677,8 +1677,14 @@ function ensureWorkshopWater(){
 function resetWorkshopTanks(){
   workshopGateOpen=false;workshopGateStart=0;gate.visible=true;gate.position.y=.55;
   const water=ensureWorkshopWater();water.reset();water.setSources([]);water.setEnabled(true);
-  // Finite initial charge only: enough to visibly fill one tank, with no source thereafter.
-  for(let x=-4.0;x<=-2.05;x+=.28)for(let z=-.84;z<=.84;z+=.28)water.inject(.030,x,z);
+  // Finite initial charge only. Left tank footprint is 2.8 x 2.4 and the
+  // transparent walls are 2.25 high: 15.12 volume units fills it to the brim.
+  // Spread that charge across the solver cells in the tank so initialization is
+  // hydrostatic rather than a single violent injection.
+  const xs=[];for(let x=-4.30;x<=-1.80;x+=.28)xs.push(x);
+  const zs=[];for(let z=-1.05;z<=1.05;z+=.28)zs.push(z);
+  const q=15.12/(xs.length*zs.length);
+  for(const x of xs)for(const z of zs)water.inject(q,x,z);
 }
 function removeWorkshopGate(){
   if(workshopGateOpen)return;
