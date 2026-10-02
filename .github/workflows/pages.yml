@@ -29,3 +29,22 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify deployed Betwixt provenance
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          expected="$(tr -d '\r\n' < betwixt/.repository-sha)"
+          test -n "$expected"
+          url="${PAGE_URL%/}/betwixt/?verify=${expected}"
+          for attempt in {1..12}; do
+            body="$(curl --fail --silent --show-error --location --header 'Cache-Control: no-cache' "$url" || true)"
+            if printf '%s' "$body" | grep -Fq "data-repository-sha=\"${expected}\""; then
+              echo "Deployed Betwixt serves Repository ${expected}."
+              exit 0
+            fi
+            echo "Waiting for deployed Betwixt provenance (attempt ${attempt}/12)..."
+            sleep 5
+          done
+          echo "Deployed Betwixt does not serve expected Repository ${expected}." >&2
+          exit 1
