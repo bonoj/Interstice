@@ -38,11 +38,6 @@ select{width:100%;padding:0 12px;appearance:auto}
 @media (max-width:520px){#counter{top:48px}}
 @media (min-width:900px){button{min-height:42px}}
 
-#labName{
-  position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:15;
-  color:#e8edf0;font:600 12px/1 system-ui,sans-serif;letter-spacing:.08em;
-  text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .16s;
-}
 
 #labActions{
   position:fixed;left:50%;bottom:max(26px,calc(env(safe-area-inset-bottom) + 18px));
@@ -64,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="12ce7697" data-repository-sha="12ce7697bc760ff6bbbc71f7d6f5c0267aee1420"><script>globalThis.__REPOSITORY_SHA__="12ce7697bc760ff6bbbc71f7d6f5c0267aee1420";globalThis.__REPOSITORY_BUILD__="12ce7697";</script><script>(()=>{
+<body data-repository-build="b4035e10" data-repository-sha="b4035e10ca2faecf361e8ae2a2c87dcc340fe2d9"><script>globalThis.__REPOSITORY_SHA__="b4035e10ca2faecf361e8ae2a2c87dcc340fe2d9";globalThis.__REPOSITORY_BUILD__="b4035e10";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -175,7 +170,6 @@ select{width:100%;padding:0 12px;appearance:auto}
 
 <div id="fault"></div>
 
-<div id="labName"></div>
 <div id="labActions" aria-hidden="true">
   <button id="enterLab" type="button">ENTER LAB</button>
   <button id="githubLab" class="secondary" type="button">GITHUB</button>
@@ -424,7 +418,6 @@ Attention brings a presence to the observer. Commitment carries the observer to 
 </script>
 
 <script>
-const labNameEl=document.getElementById('labName');
 const labActionsEl=document.getElementById('labActions');
 const enterLabEl=document.getElementById('enterLab');
 const githubLabEl=document.getElementById('githubLab');
@@ -1526,11 +1519,7 @@ function setLabActions(id){
   labActionsEl.classList.toggle('visible',visible);
   labActionsEl.setAttribute('aria-hidden',visible?'false':'true');
 }
-function updateLabLabel(){
-  const name=selectedLabName();
-  labNameEl.textContent=name||'';
-  labNameEl.style.opacity=name?'1':'0';
-}
+function updateLabLabel(){}
 enterLabEl.addEventListener('click',e=>{
   e.stopPropagation();
   if(selectedEntity&&ecs.has(selectedEntity,C.Destination))beginEntry(selectedEntity);
