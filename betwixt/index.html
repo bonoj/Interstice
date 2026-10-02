@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="6c56aeeb" data-repository-sha="6c56aeeb8cc9c0c9f35ef508a3145f8e4923eb16"><script>globalThis.__REPOSITORY_SHA__="6c56aeeb8cc9c0c9f35ef508a3145f8e4923eb16";globalThis.__REPOSITORY_BUILD__="6c56aeeb";</script><script>(()=>{
+<body data-repository-build="dde92631" data-repository-sha="dde92631e231af66723a143096bb4b84756d1b46"><script>globalThis.__REPOSITORY_SHA__="dde92631e231af66723a143096bb4b84756d1b46";globalThis.__REPOSITORY_BUILD__="dde92631";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1573,9 +1573,9 @@ function setContentWorkshopHidden(hidden){
     contentFrozenAt=performance.now();
     betwixtContent.visible=false;
     workshopField.visible=true;
-    // The Crucible plinth + terrain are the current requested Workshop specimen.
-    // Bearings and other transported capabilities remain latent until requested.
-    setWorkshopTerrainVisible(true);
+    // Workshop context does not own Crucible state. The resident ⚗️ container
+    // alone decides whether its parented organism is present here.
+    if(workshopCrucibleEnabled)workshopCrucible.visible=true;
     resetWorkshopGlass();
     target.set(0,.35,0);radius=11.8;theta=.16;phi=1.02;applyCamera();
     setLabActions(null);
@@ -1593,7 +1593,7 @@ function setContentWorkshopHidden(hidden){
     for(const st of descentStates.values())st.nextAt+=pause;
     betwixtContent.visible=true;
     workshopField.visible=false;
-    setWorkshopTerrainVisible(false);
+    workshopCrucible.visible=false;
 
     contentFrozenAt=0;
     home();
@@ -1777,7 +1777,7 @@ function removeWorkshopCrucibleSpells(){
 }
 function setWorkshopCrucibleEnabled(enabled,button){
   workshopCrucibleEnabled=!!enabled;
-  if(workshopCrucibleEnabled){ensureWorkshopTerrain();workshopCrucible.visible=true;installWorkshopCrucibleSpells()}
+  if(workshopCrucibleEnabled){ensureWorkshopTerrain();workshopCrucible.visible=contentWorkshopHidden;installWorkshopCrucibleSpells()}
   else{workshopCrucible.visible=false;removeWorkshopCrucibleSpells()}
   button?.classList.toggle('active',workshopCrucibleEnabled);button?.setAttribute('aria-pressed',workshopCrucibleEnabled?'true':'false');
   workshopBearingLast=performance.now();window.vestibuleDirty=true;return workshopCrucibleEnabled;
