@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="6c59a110" data-repository-sha="6c59a11006bbbeb1d6ad96609d93d864aa8f2b57"><script>globalThis.__REPOSITORY_SHA__="6c59a11006bbbeb1d6ad96609d93d864aa8f2b57";globalThis.__REPOSITORY_BUILD__="6c59a110";</script><script>(()=>{
+<body data-repository-build="c5ea3fb8" data-repository-sha="c5ea3fb854dfe1aea3112105011daed309510e20"><script>globalThis.__REPOSITORY_SHA__="c5ea3fb854dfe1aea3112105011daed309510e20";globalThis.__REPOSITORY_BUILD__="c5ea3fb8";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -2755,6 +2755,7 @@ window.vestibule={
 applyRing({preserveCamera:true});
 home();
 window.vestibuleReady=true;
+dispatchEvent(new Event('vestibule-ready'));
 clearTimeout(window.vestibuleWatch);
 window.vestibuleDirty=true;
 </script>
@@ -3109,5 +3110,5 @@ function attachBetwixtMirror(){
   return mirror;
 }
 
-addEventListener("load",()=>attachBetwixtMirror(),{once:true});</script></body>
+(function attachMirrorWhenReady(){if(globalThis.vestibuleReady&&globalThis.vestibule?.presences?.length){attachBetwixtMirror();return}addEventListener("vestibule-ready",attachMirrorWhenReady,{once:true})})();</script></body>
 </html>
