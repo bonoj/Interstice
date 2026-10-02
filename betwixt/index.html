@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="15b31779" data-repository-sha="15b3177914f31fc9a81f35449ad76a732d1680c4"><script>globalThis.__REPOSITORY_SHA__="15b3177914f31fc9a81f35449ad76a732d1680c4";globalThis.__REPOSITORY_BUILD__="15b31779";</script><script>(()=>{
+<body data-repository-build="36968131" data-repository-sha="3696813133beb7a15b9734c4bae85cc6fbf4b953"><script>globalThis.__REPOSITORY_SHA__="3696813133beb7a15b9734c4bae85cc6fbf4b953";globalThis.__REPOSITORY_BUILD__="36968131";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1710,6 +1710,7 @@ for(const side of [-1,1]){
 /* Seventh Workshop pressure: SixCities as a 5x5 civilization field.
    Twenty-five different relationship propositions; scale intentionally loose. */
 const civField=new THREE.Group();civField.name='workshop:six-cities-5x5';workshopField.add(civField);
+civField.visible=false; // failed breadth specimen retained as source evidence
 const civGreen=new THREE.MeshStandardMaterial({color:0x55734b,roughness:.78,metalness:.04});
 const civWater=new THREE.MeshStandardMaterial({color:0x5c9da4,transparent:true,opacity:.34,roughness:.20,metalness:.05,depthWrite:false});
 const civStone=new THREE.MeshStandardMaterial({color:0x4a4640,roughness:.88,metalness:.04});
@@ -1784,6 +1785,32 @@ for(let i=0;i<25;i++){
  p.position.set((col-2)*2.25,0,(row-2)*2.25);
  civField.add(p);
 }
+
+
+/* Eighth Workshop pressure: one object only.
+   A geodesic glass pressure bauble. The faceting belongs to the shell itself. */
+const geodesicBauble=new THREE.Group();
+geodesicBauble.name='workshop:geodesic-glass-bauble';
+workshopField.add(geodesicBauble);
+geodesicBauble.position.y=.92;
+const geodesicGlass=new THREE.MeshStandardMaterial({
+  color:0xc8e2e3,
+  transparent:true,
+  opacity:.16,
+  roughness:.08,
+  metalness:0,
+  depthWrite:false,
+  side:THREE.DoubleSide,
+  flatShading:true
+});
+const geodesicGeometry=new THREE.IcosahedronGeometry(.92,2);
+const geodesicShell=new THREE.Mesh(geodesicGeometry,geodesicGlass);
+geodesicBauble.add(geodesicShell);
+const geodesicEdges=new THREE.LineSegments(
+  new THREE.EdgesGeometry(geodesicGeometry,1),
+  new THREE.LineBasicMaterial({color:0x667879,transparent:true,opacity:.62})
+);
+geodesicBauble.add(geodesicEdges);
 
 function resetWorkshopGlass(){}
 function updateWorkshop(now){
