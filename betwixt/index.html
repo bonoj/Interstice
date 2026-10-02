@@ -61,21 +61,12 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="06994c79" data-repository-sha="06994c793507e424c7dd96ef6b749bf87dc36700"><script>globalThis.__REPOSITORY_SHA__="06994c793507e424c7dd96ef6b749bf87dc36700";globalThis.__REPOSITORY_BUILD__="06994c79";</script><script>(()=>{
+<body data-repository-build="c570f190" data-repository-sha="c570f190dc301b1be1c414052657599adc9523a4"><script>globalThis.__REPOSITORY_SHA__="c570f190dc301b1be1c414052657599adc9523a4";globalThis.__REPOSITORY_BUILD__="c570f190";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
-    temporary:[
-      {id:"spin",text:"🪄",label:"Spin presences",onClick:spinPresences},
-      {id:"marble",text:"⚪️",label:"Compact Betwixt content",onClick:marbleBetwixtContent},
-      {id:"crucible",text:"⚗️",label:"Summon intact Crucible",onClick:toggleCrucible},
-      {id:"arcball",text:"🧭",label:"Arcball navigation",onClick:toggleArcball},
-      {id:"fluid-globes",text:"💦",label:"Water and lava shatter vessels",onClick:toggleFluidGlobes},
-      {id:"crayon",text:"🖍",label:"Crayon",onClick:toggleCrayon,onDoubleClick:clearCrayon,onLongPress:exportCrayon,onContextMenu:exportCrayon}
-    ],
+    temporary:[],
     resident:[
-      {id:"workshop",text:"🛠",label:"Clear the Workshop bench",onClick:toggleWorkshop},
-      {id:"lift",text:"⬆️",label:"Lift Betwixt content",onClick:liftBetwixtContent},
-      {id:"refresh",text:"🔄",label:"Reload",onClick:()=>location.reload()}
+      {id:"workshop",text:"🛠",label:"Workshop",onClick:toggleWorkshop}
     ]
   };
   const build=globalThis.__REPOSITORY_BUILD__||"local";
@@ -254,6 +245,18 @@ select{width:100%;padding:0 12px;appearance:auto}
 
   for(const spell of spells.temporary)registerTool({...spell,lane:"temporary"});
   for(const spell of spells.resident)registerTool({...spell,lane:"resident"});
+
+  // Betwixt now begins at the bench. Workshop is the sole manifested spell.
+  // Wait for the donor to expose its world boundary, then enter exactly once.
+  function enterWorkshopOnReady(){
+    const world=globalThis.vestibule;
+    if(!world?.setContentWorkshopHidden)return false;
+    if(!world.contentWorkshopHidden)world.setContentWorkshopHidden(true);
+    const button=registered.get("workshop");
+    button?.classList.add("active");button?.setAttribute("aria-pressed","true");
+    return true;
+  }
+  if(!enterWorkshopOnReady())addEventListener("vestibule-ready",enterWorkshopOnReady,{once:true});
 
   globalThis.RepositoryShell={
     place,
