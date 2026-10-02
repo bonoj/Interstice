@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="26481a83" data-repository-sha="26481a83f3b2ad4629c0be6b79c7fc5cf557612d"><script>globalThis.__REPOSITORY_SHA__="26481a83f3b2ad4629c0be6b79c7fc5cf557612d";globalThis.__REPOSITORY_BUILD__="26481a83";</script><script>(()=>{
+<body data-repository-build="d12bea59" data-repository-sha="d12bea598ee9dc1c4dee53a92fc3022754218637"><script>globalThis.__REPOSITORY_SHA__="d12bea598ee9dc1c4dee53a92fc3022754218637";globalThis.__REPOSITORY_BUILD__="d12bea59";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1859,9 +1859,9 @@ function makeSixRingSphere(){
     r.rotation.set(...rotation);
     g.add(r);
   }
-  // Two top rings, four evenly around the equator.
-  port(new THREE.Vector3(-.28,.86,0),[Math.PI/2,0,0]);
-  port(new THREE.Vector3(.28,.86,0),[Math.PI/2,0,0]);
+  // One polar ring above, one below, plus four evenly around the equator.
+  port(new THREE.Vector3(0,.92,0),[Math.PI/2,0,0]);
+  port(new THREE.Vector3(0,-.92,0),[Math.PI/2,0,0]);
   for(let i=0;i<4;i++){
     const a=i*Math.PI/2;
     const x=Math.cos(a)*.90,z=Math.sin(a)*.90;
