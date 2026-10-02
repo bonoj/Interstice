@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="fe215284" data-repository-sha="fe215284561975a866286277f56ae3f8caec07c3"><script>globalThis.__REPOSITORY_SHA__="fe215284561975a866286277f56ae3f8caec07c3";globalThis.__REPOSITORY_BUILD__="fe215284";</script><script>(()=>{
+<body data-repository-build="0c8eda5e" data-repository-sha="0c8eda5ee8c8a713da6ec4eeecdfca86d028c868"><script>globalThis.__REPOSITORY_SHA__="0c8eda5ee8c8a713da6ec4eeecdfca86d028c868";globalThis.__REPOSITORY_BUILD__="0c8eda5e";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2591,7 +2591,7 @@ inkCanvas.addEventListener('pointerup',finishInkPointer);
 inkCanvas.addEventListener('pointercancel',finishInkPointer);
 sizeInk();
 
-const canvas=renderer.domElement, pointers=new Map();
+const canvas=renderer.domElement, pointers=new Map(), multiTouchPointers=new Set();
 const arcball=new ArcballControls(camera,canvas,scene);
 arcball.enabled=false;
 arcball.enableAnimations=true;
@@ -2631,7 +2631,7 @@ function panPixels(dx,dy,gain=.8){
   target.addScaledVector(new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),-dx*scale);
   target.addScaledVector(new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,1),dy*scale);
 }
-function clearPointer(id){pointers.delete(id);tapStarts.delete(id);if(pointers.size<2){pinch=null;pinchCentroid=null}}
+function clearPointer(id){pointers.delete(id);tapStarts.delete(id);multiTouchPointers.delete(id);if(pointers.size<2){pinch=null;pinchCentroid=null}}
 
 function easeQuiet(t){
   // Cubic ease-in-out: decisive departure, readable middle, quiet arrival.
@@ -2910,6 +2910,9 @@ function beginEntry(id){
 }
 const SelectionSystem={
   pick(x,y){
+    // Hidden Betwixt content remains alive for cheap restoration, but absence
+    // from the Workshop context also means absence from selection.
+    if(contentWorkshopHidden)return null;
     const r=canvas.getBoundingClientRect();
     pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
     raycaster.setFromCamera(pointerNDC,camera);
@@ -2936,7 +2939,10 @@ canvas.addEventListener('pointerdown',e=>{
   if(arcballActive)return;
   canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   tapStarts.set(e.pointerId,{x:e.clientX,y:e.clientY,t:performance.now()});
-  if(pointers.size===2){const a=[...pointers.values()];pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchCentroid=centroid(a)}
+  if(pointers.size===2){
+    for(const id of pointers.keys())multiTouchPointers.add(id);
+    const a=[...pointers.values()];pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchCentroid=centroid(a)
+  }
 });
 canvas.addEventListener('pointermove',e=>{
   if(arcballActive)return;
@@ -2960,7 +2966,7 @@ canvas.addEventListener('pointerup',e=>{
   if(start){
     const travel=Math.hypot(e.clientX-start.x,e.clientY-start.y);
     const elapsed=performance.now()-start.t;
-    if(travel<10 && elapsed<420 && pointers.size===1) SelectionSystem.tap(e.clientX,e.clientY);
+    if(!multiTouchPointers.has(e.pointerId)&&travel<10&&elapsed<420&&pointers.size===1)SelectionSystem.tap(e.clientX,e.clientY);
   }
   clearPointer(e.pointerId);
 });
