@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="8faefce6" data-repository-sha="8faefce69fe19066aa7752d697362dcbdf32b355"><script>globalThis.__REPOSITORY_SHA__="8faefce69fe19066aa7752d697362dcbdf32b355";globalThis.__REPOSITORY_BUILD__="8faefce6";</script><script>(()=>{
+<body data-repository-build="3feb5e0a" data-repository-sha="3feb5e0a16c6bd185d634ce202c42ce1ec1be575"><script>globalThis.__REPOSITORY_SHA__="3feb5e0a16c6bd185d634ce202c42ce1ec1be575";globalThis.__REPOSITORY_BUILD__="3feb5e0a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1572,8 +1572,9 @@ function setContentWorkshopHidden(hidden){
     contentFrozenAt=performance.now();
     betwixtContent.visible=false;
     workshopField.visible=true;
-    // Workshop entry reveals no latent capability. Terrain and bearings remain
-    // possible until an explicit operation manifests them.
+    // The Crucible plinth + terrain are the current requested Workshop specimen.
+    // Bearings and other transported capabilities remain latent until requested.
+    setWorkshopTerrainVisible(true);
     resetWorkshopGlass();
     target.set(0,.35,0);radius=11.8;theta=.16;phi=1.02;applyCamera();
     setLabActions(null);
@@ -1634,6 +1635,9 @@ function ensureWorkshopTerrain(){
   try{workshopTerrain=createTerrainSystem({THREE,scene})}
   finally{delete globalThis.__workshopTerrainOwner}
   workshopTerrain.owner=owner;
+  // Present the intact Crucible apparatus as a raised specimen in Workshop.
+  // Its terrain/plinth relationship remains untouched inside this owner transform.
+  owner.position.y=3.0;
   workshopTerrain.mesh.name='workshop:crucible-terrain';
   workshopTerrain.apparatus.name='workshop:crucible-terrain-apparatus';
   workshopTerrain.mesh.visible=contentWorkshopHidden;
