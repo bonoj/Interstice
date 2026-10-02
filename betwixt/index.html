@@ -59,7 +59,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #labActions button:active{background:#ded8cd}
 </style>
 </head>
-<body data-repository-build="a6c72d39" data-repository-sha="a6c72d39c280252f0e27bbb1759dfbbbf7909036"><script>globalThis.__REPOSITORY_SHA__="a6c72d39c280252f0e27bbb1759dfbbbf7909036";globalThis.__REPOSITORY_BUILD__="a6c72d39";</script><script>(()=>{
+<body data-repository-build="da0911ac" data-repository-sha="da0911ac085ccf4c84a4e408426810eb38d93103"><script>globalThis.__REPOSITORY_SHA__="da0911ac085ccf4c84a4e408426810eb38d93103";globalThis.__REPOSITORY_BUILD__="da0911ac";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -1789,10 +1789,6 @@ for(let i=0;i<25;i++){
 
 /* Eighth Workshop pressure: one object only.
    A geodesic glass pressure bauble. The faceting belongs to the shell itself. */
-const geodesicBauble=new THREE.Group();
-geodesicBauble.name='workshop:geodesic-glass-bauble';
-workshopField.add(geodesicBauble);
-geodesicBauble.position.y=.92;
 const geodesicGlass=new THREE.MeshStandardMaterial({
   color:0xc8e2e3,
   transparent:true,
@@ -1802,14 +1798,47 @@ const geodesicGlass=new THREE.MeshStandardMaterial({
   depthWrite:false,
   side:THREE.DoubleSide
 });
-const geodesicGeometry=new THREE.SphereGeometry(.92,18,12);
-const geodesicShell=new THREE.Mesh(geodesicGeometry,geodesicGlass);
-geodesicBauble.add(geodesicShell);
-const geodesicEdges=new THREE.LineSegments(
-  new THREE.EdgesGeometry(new THREE.SphereGeometry(.92,10,7)),
-  new THREE.LineBasicMaterial({color:0x667879,transparent:true,opacity:.62})
-);
-geodesicBauble.add(geodesicEdges);
+const baubleEdgeMaterial=new THREE.LineBasicMaterial({color:0x667879,transparent:true,opacity:.62});
+function makeBauble(){
+  const g=new THREE.Group();
+  const shellGeometry=new THREE.SphereGeometry(.92,18,12);
+  g.add(new THREE.Mesh(shellGeometry,geodesicGlass));
+  g.add(new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.SphereGeometry(.92,10,7)),
+    baubleEdgeMaterial
+  ));
+  return g;
+}
+// A — retained exactly, now resting on the workshop floor.
+const baubleA=makeBauble();
+baubleA.name='workshop:A';
+baubleA.position.set(-1.45,.92,0);
+workshopField.add(baubleA);
+
+// B — A plus two warm-golden brass octonuts inset through the polar vertices.
+const baubleB=makeBauble();
+baubleB.name='workshop:B';
+baubleB.position.set(1.45,.92,0);
+workshopField.add(baubleB);
+const octonutMaterial=new THREE.MeshStandardMaterial({
+  color:0xc58a32,
+  roughness:.24,
+  metalness:.82
+});
+function addOctonut(parent,y){
+  const outer=new THREE.CylinderGeometry(.24,.24,.16,8,1,false);
+  const inner=new THREE.CylinderGeometry(.105,.105,.18,8,1,false);
+  // Eight-sided nut silhouette plus a dark inset bore; centered on the glass vertex
+  // so half its thickness is inside the dome and half outside.
+  const nut=new THREE.Mesh(outer,octonutMaterial);
+  nut.position.y=y;
+  parent.add(nut);
+  const bore=new THREE.Mesh(inner,new THREE.MeshStandardMaterial({color:0x3b2a18,roughness:.35,metalness:.45}));
+  bore.position.y=y+(y>0?.081:-.081);
+  parent.add(bore);
+}
+addOctonut(baubleB,.92);
+addOctonut(baubleB,-.92);
 
 function resetWorkshopGlass(){}
 function updateWorkshop(now){
