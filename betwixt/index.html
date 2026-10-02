@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="204763d3" data-repository-sha="204763d31ce8b61a292ebca4a45a0eb47ad10554"><script>globalThis.__REPOSITORY_SHA__="204763d31ce8b61a292ebca4a45a0eb47ad10554";globalThis.__REPOSITORY_BUILD__="204763d3";</script><script>(()=>{
+<body data-repository-build="0233e12a" data-repository-sha="0233e12a26b58fbd7fd7709b3ef52e5be5f3592d"><script>globalThis.__REPOSITORY_SHA__="0233e12a26b58fbd7fd7709b3ef52e5be5f3592d";globalThis.__REPOSITORY_BUILD__="0233e12a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1747,7 +1747,7 @@ function ensureWorkshopMeteors(){
 }
 function cycleWorkshopMeteor(button){
   if(workshopCrucibleTool==='meteor')workshopMeteorBucket=(workshopMeteorBucket+1)%4;
-  chooseWorkshopCrucibleTool('meteor',button);button.style.setProperty('--meteor-scale',String(1+workshopMeteorBucket*.08));button.style.transform='scale('+String(1+workshopMeteorBucket*.08)+')';button.setAttribute('aria-label','Call meteor magnitude '+(workshopMeteorBucket+1)+' at tapped point');
+  chooseWorkshopCrucibleTool('meteor',button);button.style.setProperty('--meteor-scale',String(1+workshopMeteorBucket*.08));button.style.fontSize=String(1.25*(1+workshopMeteorBucket*.08))+'rem';button.setAttribute('aria-label','Call meteor magnitude '+(workshopMeteorBucket+1)+' at tapped point');
 }
 
 // Exact Crucible controls, presented in Repository's left temporary spell tray.
