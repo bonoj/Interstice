@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="c5ea3fb8" data-repository-sha="c5ea3fb854dfe1aea3112105011daed309510e20"><script>globalThis.__REPOSITORY_SHA__="c5ea3fb854dfe1aea3112105011daed309510e20";globalThis.__REPOSITORY_BUILD__="c5ea3fb8";</script><script>(()=>{
+<body data-repository-build="821bc326" data-repository-sha="821bc3266fbb56d31d6a72467b9bd70cbd3d2c74"><script>globalThis.__REPOSITORY_SHA__="821bc3266fbb56d31d6a72467b9bd70cbd3d2c74";globalThis.__REPOSITORY_BUILD__="821bc326";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[
@@ -532,9 +532,12 @@ window.vestibuleWatch=setTimeout(()=>{
 },30000);
 </script>
 
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import { ArcballControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/ArcballControls.js';
+import * as THREE from 'three';
+import { ArcballControls } from 'three/addons/controls/ArcballControls.js';
 
 const scene=new THREE.Scene();
 const WORLD_RADIUS=58;
