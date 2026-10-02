@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="b27ca198" data-repository-sha="b27ca198e87f54b50d7440a31727241414dc176a"><script>globalThis.__REPOSITORY_SHA__="b27ca198e87f54b50d7440a31727241414dc176a";globalThis.__REPOSITORY_BUILD__="b27ca198";</script><script>(()=>{
+<body data-repository-build="1c913e89" data-repository-sha="1c913e891d3f335a0e87cd953161c986a5e301ed"><script>globalThis.__REPOSITORY_SHA__="1c913e891d3f335a0e87cd953161c986a5e301ed";globalThis.__REPOSITORY_BUILD__="1c913e89";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1731,15 +1731,31 @@ globalThis.WorkshopBearings={
   inspect:()=>ensureWorkshopBearings()?.inspect()
 };
 
+// Crucible meteor spell: same four impact buckets, same transported flight/impact system.
+let workshopMeteors=null,workshopMeteorWorld=null,workshopMeteorBucket=1;
+const workshopImpactBuckets=[.18,.42,.85,1.55];
+function ensureWorkshopMeteors(){
+  if(workshopMeteors)return workshopMeteors;const terrain=ensureWorkshopTerrain();if(!terrain||typeof createMeteorSystem!=='function')return null;
+  const world=createWorld(),Transform=world.component('Transform'),RenderObject=world.component('RenderObject'),Meteor=world.component('Meteor'),MeteorShower=world.component('MeteorShower'),Body=world.component('Body'),Locus=world.component('Locus');
+  workshopMeteorWorld=world;const proxy={add:o=>terrain.owner.add(o),remove:o=>o.parent?.remove(o)};
+  workshopMeteors=createMeteorSystem({world,components:{Transform,RenderObject,Meteor,MeteorShower,Body,Locus},THREE,scene:proxy,terrain,locus:'workshop'});
+  return workshopMeteors;
+}
+function cycleWorkshopMeteor(button){
+  if(workshopCrucibleTool==='meteor')workshopMeteorBucket=(workshopMeteorBucket+1)%4;
+  chooseWorkshopCrucibleTool('meteor',button);button.style.setProperty('--meteor-scale',String(1+workshopMeteorBucket*.08));button.style.transform='scale('+String(1+workshopMeteorBucket*.08)+')';button.setAttribute('aria-label','Call meteor magnitude '+(workshopMeteorBucket+1)+' at tapped point');
+}
+
 // Exact Crucible controls, presented in Repository's left temporary spell tray.
 let workshopCrucibleTool=null,workshopBearingMagnitude=0;
 function chooseWorkshopCrucibleTool(tool,button){
   workshopCrucibleTool=tool;
-  for(const id of ['crucible-bearings','crucible-water','crucible-lava','crucible-carve','crucible-raise'])globalThis.RepositoryShell?.button?.(id)?.classList.remove('active');
+  for(const id of ['crucible-meteor','crucible-bearings','crucible-water','crucible-lava','crucible-carve','crucible-raise'])globalThis.RepositoryShell?.button?.(id)?.classList.remove('active');
   button?.classList.add('active');
 }
 function installWorkshopCrucibleSpells(){
   const shell=globalThis.RepositoryShell;if(!shell||shell.inspect().tools.includes('crucible-terrain-next'))return;
+  shell.registerTool({id:'crucible-meteor',text:'☄️',label:'Call meteor magnitude 2 at tapped point',onClick:b=>cycleWorkshopMeteor(b)});
   shell.registerTool({id:'crucible-terrain-next',text:'⛰️',label:'Next deterministic terrain',onClick:()=>WorkshopTerrain.next()});
   shell.registerTool({id:'crucible-bearings',text:'⚫️',label:'Spawn 25 bearings at tapped point; tap again for 25 thousand',onClick:b=>{if(workshopCrucibleTool==='bearing-packet'||workshopCrucibleTool==='bearings-many')workshopBearingMagnitude=workshopBearingMagnitude?0:1;else workshopBearingMagnitude=0;chooseWorkshopCrucibleTool(workshopBearingMagnitude?'bearings-many':'bearing-packet',b);b.textContent='⚫️';b.style.fontSize=workshopBearingMagnitude?'1.9rem':'.9rem';b.setAttribute('aria-label',workshopBearingMagnitude?'Spawn 25 thousand bearings at tapped point':'Spawn 25 bearings at tapped point')}});
   shell.registerTool({id:'crucible-water',text:'💧',label:'Place transport source at tapped point',onClick:b=>chooseWorkshopCrucibleTool('source',b)});
@@ -2253,7 +2269,8 @@ function workshopTap(x,y){
     const hit=raycaster.intersectObject(workshopTerrain.mesh,true)[0];
     if(hit){
       const p=workshopTerrain.owner.worldToLocal(hit.point.clone()),tool=workshopCrucibleTool;
-      if(tool==='carve')workshopTerrain.excavate({x:p.x,z:p.z},{radius:.82,depth:.42});
+      if(tool==='meteor'){const m=ensureWorkshopMeteors();m?.meteor(m.targetAt(p.x,p.z),workshopImpactBuckets[workshopMeteorBucket]);}
+      else if(tool==='carve')workshopTerrain.excavate({x:p.x,z:p.z},{radius:.82,depth:.42});
       else if(tool==='raise')workshopTerrain.raise({x:p.x,z:p.z},{radius:1.15,height:.55});
       else if(tool==='bearing-packet'||tool==='bearings-many')WorkshopBearings.spawn(tool==='bearings-many'?25000:25,new THREE.Vector3(p.x,p.y+.35,p.z));
       else if(tool==='source'||tool==='lava'){const q=ensureWorkshopLiquids(),liquid=tool==='lava'?q?.lava:q?.water;liquid?.addTimedSource({x:p.x,z:p.z,rate:.9,duration:3});liquid?.setEnabled(true)}
@@ -2912,6 +2929,7 @@ renderer.setAnimationLoop((now)=>{
     updateWorkshop(now);
     const workshopDt=Math.min(.05,Math.max(.001,(now-workshopBearingLast)/1000));
     if(workshopWater||workshopLava){workshopWater?.update(now);workshopLava?.update(now);updateWorkshopSteam(now,workshopDt)}
+    workshopMeteors?.update(now);
     if(workshopBearings){const bearingDt=Math.min(.15,Math.max(.001,(now-workshopBearingLast)/1000));workshopBearingLast=now;workshopBearings.update(bearingDt);updateWorkshopLavaPops(now)}else workshopBearingLast=now;
     renderer.render(scene,camera);window.vestibuleDirty=false;
     return;
@@ -3614,6 +3632,30 @@ function createTerrainGenesis({terrain}){
   function run(index=0,worldSeed=741){const recipe=recipes[((index%recipes.length)+recipes.length)%recipes.length];return execute(recipe,worldSeed,"authored");}
   function runSeed(seed=741){const recipe=procedural.generate(seed|0);return execute(recipe,seed|0,"seed");}
   return{run,runSeed,generateRecipe:seed=>procedural.generate(seed|0),families:procedural.families,recipes:()=>recipes.map(r=>({id:r.id,label:r.label,ops:r.ops.map(o=>({...o}))}))};
+}
+
+function createMeteorSystem({world,components,THREE,scene,terrain,locus,onImpact=()=>{}}){
+ const {Transform,RenderObject,Meteor,MeteorShower,Body,Locus}=components; let serial=0,clockNow=0,enabled=true,pausedAt=null;
+ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+ class RNG{constructor(s=1){this.s=s>>>0||1}next(){let x=this.s;x^=x<<13;x^=x>>>17;x^=x<<5;this.s=x>>>0;return this.s/4294967296}}
+ const targetAt=(x=0,z=0)=>{const h=terrain.terrainHeight(x,z);return new THREE.Vector3(x,Number.isFinite(h)?h:terrain.groundHeight(x,z),z)};
+ function dispose(o){scene.remove(o);o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose?.());else o.material?.dispose?.()}
+ function launch(target=targetAt(),power=1,packet=null){const r=new RNG(((++serial+17)*991)>>>0),start=target.clone().add(new THREE.Vector3((r.next()-.5)*2.4,10+r.next()*3.2,(r.next()-.5)*2.4)),id=world.entity();
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.145,7,5),new THREE.MeshBasicMaterial({color:0xff8a4c,transparent:true,opacity:.96})),wake=new THREE.Group();scene.add(head,wake);
+  world.add(id,Transform,{position:start.clone(),rotation:new THREE.Euler(),scale:new THREE.Vector3(1,1,1),visible:true});world.add(id,RenderObject,{object:head});world.add(id,Meteor,{start,target:target.clone(),power,born:clockNow,life:300+r.next()*100,wake,wakeParticles:[],wakeLastEmit:clockNow,wakeRng:r,packet});if(Locus)world.add(id,Locus,{id:locus});return id}
+ function impulse(center,power){for(const id of world.query(Transform,Body)){if(Meteor.has(id))continue;const t=Transform.get(id);if(!t.velocity)continue;const d=t.position.clone().sub(center),dist=Math.max(.25,d.length());if(dist>3.2)continue;d.y=Math.max(.45,d.y+.7);d.normalize();t.velocity.addScaledVector(d,Math.max(0,3.8*power*(1-dist/3.4)))}}
+ function removeMeteor(id){const m=Meteor.get(id),ro=RenderObject.get(id);if(m?.wake){for(const p of m.wakeParticles||[]){p.mesh.geometry?.dispose?.();p.mesh.material?.dispose?.()}scene.remove(m.wake)}if(ro?.object)dispose(ro.object);world.destroy(id)}
+ function impact(id,point,power,canChangeTerrain){if(canChangeTerrain)terrain.impact(point,{magnitude:power});impulse(point,power);onImpact({point:point.clone(),magnitude:power,terrainChanged:canChangeTerrain});removeMeteor(id)}
+ function meteor(center=targetAt(),power=1,packet=null){return launch(center,power,packet)}
+ function meteors(center=targetAt()){const id=world.entity(),r=new RNG((++serial*2246822519)>>>0),delays=[];let total=0;for(let i=0;i<9;i++){const d=170+r.next()*330;delays.push(d);total+=d}const scale=2900/Math.max(1,total);delays.forEach((d,i)=>delays[i]=d*scale);world.add(id,MeteorShower,{center:center.clone(),remaining:10,next:clockNow+80,rng:r,delays,index:0});if(Locus)world.add(id,Locus,{id:locus});return id}
+ function setEnabled(next,now=clockNow){next=!!next;if(next===enabled)return enabled;if(!next){pausedAt=now;enabled=false;for(const id of world.query(Meteor)){const m=Meteor.get(id),t=Transform.get(id);if(t)t.visible=false;if(m?.wake)m.wake.visible=false}return enabled}const shift=Math.max(0,now-(pausedAt??now));for(const id of world.query(Meteor)){const m=Meteor.get(id),t=Transform.get(id);m.born+=shift;m.wakeLastEmit+=shift;for(const p of m.wakeParticles||[])p.born+=shift;if(t)t.visible=true;if(m?.wake)m.wake.visible=true}for(const id of world.query(MeteorShower))MeteorShower.get(id).next+=shift;pausedAt=null;enabled=true;clockNow=now;return enabled}
+ function update(now){clockNow=now;if(!enabled)return;for(const id of world.query(Transform,Meteor)){const t=Transform.get(id),m=Meteor.get(id),u=clamp((now-m.born)/m.life,0,1),e=1-Math.pow(1-u,2),prev=t.position.clone(),next=m.start.clone().lerp(m.target,e);if(m.packet&&m.packet.count>1){const phase=(m.packet.member/(m.packet.count-1)-.5),elastic=Math.sin(u*Math.PI)*(.16+.06*m.packet.count),wobble=Math.sin(u*Math.PI*3+m.packet.member*1.7)*.08;next.x+=phase*elastic+wobble;next.z+=Math.cos(m.packet.member*2.1+u*Math.PI*2)*elastic*.42;}const hit=terrain.segmentApparatusHit(prev,next);if(hit){t.position.copy(hit.point);impact(id,hit.point,m.power,false);continue}t.position.copy(next);
+   const emitEvery=34;if(now-m.wakeLastEmit>=emitEvery&&u<.94){const steps=Math.min(3,Math.floor((now-m.wakeLastEmit)/emitEvery));for(let k=0;k<steps;k++){m.wakeLastEmit+=emitEvery;const wr=m.wakeRng,j=.025+.035*wr.next(),mesh=new THREE.Mesh(new THREE.SphereGeometry(j,5,4),new THREE.MeshBasicMaterial({color:0xff8a4c,transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending}));mesh.position.copy(next).add(new THREE.Vector3((wr.next()-.5)*.08,(wr.next()-.5)*.08,(wr.next()-.5)*.08));m.wake.add(mesh);m.wakeParticles.push({mesh,born:m.wakeLastEmit,life:125+wr.next()*95})}}
+   for(let i=m.wakeParticles.length-1;i>=0;i--){const p=m.wakeParticles[i],age=(now-p.born)/p.life;if(age>=1){m.wake.remove(p.mesh);p.mesh.geometry.dispose();p.mesh.material.dispose();m.wakeParticles.splice(i,1);continue}p.mesh.material.opacity=.48*(1-age);p.mesh.scale.setScalar(1-age*.55)}
+   if(u>=1)impact(id,m.target,m.power,true)}
+  for(const id of world.query(MeteorShower)){const s=MeteorShower.get(id);if(now<s.next)continue;const a=s.rng.next()*Math.PI*2,rr=Math.sqrt(s.rng.next())*1.15,x=s.center.x+Math.cos(a)*rr,z=s.center.z+Math.sin(a)*rr,p=terrain.insideMaterial(x,z)?targetAt(x,z):targetAt(s.center.x,s.center.z);launch(p,.38);s.remaining--;if(s.remaining<=0)world.destroy(id);else s.next=now+s.delays[s.index++]}
+ }
+ return{meteor,meteors,launch,targetAt,update,setEnabled,inspect:()=>({enabled,falling:world.query(Meteor).length,showers:world.query(MeteorShower).length})}
 }
 
 function createBearingSystem({world,components,THREE,scene,terrain,locus,impacts,water=null,liquids=null,maxBearings=1000000}){
