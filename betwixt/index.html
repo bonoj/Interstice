@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="9f97b324" data-repository-sha="9f97b324eda23be0a2c71e4e3cbbe084096e76c3"><script>globalThis.__REPOSITORY_SHA__="9f97b324eda23be0a2c71e4e3cbbe084096e76c3";globalThis.__REPOSITORY_BUILD__="9f97b324";</script><script>(()=>{
+<body data-repository-build="b3762dba" data-repository-sha="b3762dba90585a040f61afbba1c744d01ed9b9bc"><script>globalThis.__REPOSITORY_SHA__="b3762dba90585a040f61afbba1c744d01ed9b9bc";globalThis.__REPOSITORY_BUILD__="b3762dba";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -72,6 +72,30 @@ select{width:100%;padding:0 12px;appearance:auto}
   };
   const build=globalThis.__REPOSITORY_BUILD__||"local";
   const sha=globalThis.__REPOSITORY_SHA__||null;
+
+  // A successful Pages deployment is not the same thing as a visitor receiving
+  // the current document: browsers/CDNs may still reuse an older index.html.
+  // Compare this executable's embedded provenance with the independently
+  // published marker. If they disagree, force one SHA-keyed navigation so the
+  // stale document cannot remain silently authoritative.
+  async function reconcilePublishedBuild(){
+    if(!sha||sha==="local"||location.protocol==="file:")return;
+    try{
+      const markerUrl=new URL(".repository-sha",location.href);
+      markerUrl.searchParams.set("probe",Date.now().toString(36));
+      const response=await fetch(markerUrl,{cache:"no-store"});
+      if(!response.ok)return;
+      const published=(await response.text()).trim();
+      if(!/^[0-9a-f]{40}$/i.test(published)||published===sha)return;
+      const current=new URL(location.href);
+      if(current.searchParams.get("build")===published.slice(0,8))return;
+      current.searchParams.set("build",published.slice(0,8));
+      location.replace(current);
+    }catch(error){
+      console.warn("Repository provenance probe failed",error);
+    }
+  }
+  reconcilePublishedBuild();
 
   const style=document.createElement("style");
   style.textContent=`
