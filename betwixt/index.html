@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="ae286526" data-repository-sha="ae286526940f1a7739bb26bb306f3a333b2d3bad"><script>globalThis.__REPOSITORY_SHA__="ae286526940f1a7739bb26bb306f3a333b2d3bad";globalThis.__REPOSITORY_BUILD__="ae286526";</script><script>(()=>{
+<body data-repository-build="d0c6a6b4" data-repository-sha="d0c6a6b4adbc26f2a7bf5884d89e6cc2eab69e11"><script>globalThis.__REPOSITORY_SHA__="d0c6a6b4adbc26f2a7bf5884d89e6cc2eab69e11";globalThis.__REPOSITORY_BUILD__="d0c6a6b4";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -4061,6 +4061,9 @@ function createBoundedWitness({position=[0,1.6,0],forward=[0,0,-1],budget=12,max
   return Object.freeze(api);
 }
 globalThis.createBoundedWitness=createBoundedWitness;
+// The first crossing has one canonical Witness. Instantiation manifests its
+// human-visible/self-blind chassis but spends no attention; pose() remains 12.
+globalThis.boundedWitness=createBoundedWitness();
 
 window.vestibule={
   scene,camera,renderer,presences,betwixtContent,
