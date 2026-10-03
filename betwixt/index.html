@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="861a5b32" data-repository-sha="861a5b322e647dcee7c4b240e7b4285ffd3e3f7e"><script>globalThis.__REPOSITORY_SHA__="861a5b322e647dcee7c4b240e7b4285ffd3e3f7e";globalThis.__REPOSITORY_BUILD__="861a5b32";</script><script>(()=>{
+<body data-repository-build="7e689bd2" data-repository-sha="7e689bd21b8eaca8629b2de078a75ee09b0a566a"><script>globalThis.__REPOSITORY_SHA__="7e689bd21b8eaca8629b2de078a75ee09b0a566a";globalThis.__REPOSITORY_BUILD__="7e689bd2";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2246,10 +2246,11 @@ const RelationalBuild=Object.freeze({
     new THREE.Vector3(-1,0,0),
     new THREE.Vector3( 1,0,0)
   ]),
-  trigonalChildren(parentDirection){
+  trigonalChildren(parentDirection,planeAxis=null){
     const back=parentDirection.clone().negate().normalize();
-    const helper=Math.abs(back.y)<.9?new THREE.Vector3(0,1,0):new THREE.Vector3(1,0,0);
-    const u=new THREE.Vector3().crossVectors(helper,back).normalize();
+    const u=planeAxis
+      ? planeAxis.clone().addScaledVector(back,-planeAxis.dot(back)).normalize()
+      : new THREE.Vector3().crossVectors(Math.abs(back.y)<.9?new THREE.Vector3(0,1,0):new THREE.Vector3(1,0,0),back).normalize();
     // Experimental ethylene is slightly opened at C-C-H (~121.5 deg), so the
     // two C-H directions are symmetric in the same plane around the C-C axis.
     const a=THREE.MathUtils.degToRad(121.55);
@@ -2289,7 +2290,7 @@ const RelationalBuild=Object.freeze({
         : node?.projection==='tetrahedral'
         ? this.tetrahedral
         : node?.projection==='trigonal-local'
-          ? this.trigonalChildren(heading)
+          ? this.trigonalChildren(heading,node.planeAxis?new THREE.Vector3(...node.planeAxis):null)
           : node?.projection==='tetrahedral-local'
           ? this.tetrahedralChildren(heading,node.torsionDegrees??0)
           : node?.projection==='bent'
@@ -2398,7 +2399,7 @@ const ethyleneGraph=Object.freeze({
   name:'ethylene-t0',root:'C1',
   nodes:Object.freeze([
     Object.freeze({id:'C1',kind:'carbon',projection:'trigonal-root',ports:3,radius:1.18}),
-    Object.freeze({id:'C2',kind:'carbon',projection:'trigonal-local',ports:3,radius:1.18}),
+    Object.freeze({id:'C2',kind:'carbon',projection:'trigonal-local',planeAxis:Object.freeze([1,0,0]),ports:3,radius:1.18}),
     ...['H1','H2','H3','H4'].map(id=>Object.freeze({id,kind:'hydrogen',ports:1,radius:.72}))
   ]),
   edges:Object.freeze([
