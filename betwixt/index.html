@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="30c1c4c9" data-repository-sha="30c1c4c9dce2b9666c422cb4a4c4f8fce65189bb"><script>globalThis.__REPOSITORY_SHA__="30c1c4c9dce2b9666c422cb4a4c4f8fce65189bb";globalThis.__REPOSITORY_BUILD__="30c1c4c9";</script><script>(()=>{
+<body data-repository-build="bd43a2b6" data-repository-sha="bd43a2b64052fbb0ddecb005f200614478ca66ff"><script>globalThis.__REPOSITORY_SHA__="bd43a2b64052fbb0ddecb005f200614478ca66ff";globalThis.__REPOSITORY_BUILD__="bd43a2b6";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1848,14 +1848,15 @@ const workshopCrucibleBearingSeeds=workshopCrucibleOrbBearings.map((_,i)=>({
 function updateWorkshopCrucibleOrb(now){
   if(!workshopCrucibleOrb.visible)return;
   const t=now*.001;
-  // Elastic tempo: the cloud visibly winds up and relaxes without teleporting.
-  const elasticSpeed=.62+.58*(.5+.5*Math.sin(t*.83+Math.sin(t*.19)*1.7));
+  // Elastic tempo is a bounded phase warp, not an absolute-time multiplier.
+  // Multiplying t by a changing speed makes the phase derivative grow with uptime.
+  const elasticPhase=t*.91+.35*Math.sin(t*.83+Math.sin(t*.19)*1.7);
   // Two rare attractors emerge from the same noisy cloud: lattice and double helix.
   const lattice=Math.pow(Math.max(0,Math.sin(t*.27)),9);
   const helix=Math.pow(Math.max(0,Math.sin(t*.193+2.1)),11)*(1-lattice);
   for(let i=0;i<workshopCrucibleOrbBearings.length;i++){
     const bearing=workshopCrucibleOrbBearings[i],s=workshopCrucibleBearingSeeds[i];
-    const a=s.phase+t*s.speed*elasticSpeed;
+    const a=s.phase+elasticPhase*s.speed;
     const chaos=new THREE.Vector3(
       Math.cos(a*1.31+s.phase)*s.radius,
       s.lift+Math.sin(a*1.73+s.phase*.7)*.145,
