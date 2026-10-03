@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="57a18dd6" data-repository-sha="57a18dd6c52ccc1dc0528bfd6e708410e7df30c6"><script>globalThis.__REPOSITORY_SHA__="57a18dd6c52ccc1dc0528bfd6e708410e7df30c6";globalThis.__REPOSITORY_BUILD__="57a18dd6";</script><script>(()=>{
+<body data-repository-build="de1461f8" data-repository-sha="de1461f8743de9949a9a4677363c571723547ac8"><script>globalThis.__REPOSITORY_SHA__="de1461f8743de9949a9a4677363c571723547ac8";globalThis.__REPOSITORY_BUILD__="de1461f8";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -220,7 +220,9 @@ select{width:100%;padding:0 12px;appearance:auto}
     // will independently boot to the same home pose.
     globalThis.vestibule?.home?.();
     const url=new URL(location.href);
-    for(const key of [...url.searchParams.keys()])if(key!=="build")url.searchParams.delete(key);
+    // Never preserve a build cache key across a requested fresh arrival.
+    // A stale document must not be able to make its own provenance sticky.
+    url.search="";
     url.searchParams.set("fresh",Date.now().toString(36));
     url.hash="";
     location.replace(url);
