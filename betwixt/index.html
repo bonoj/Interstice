@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="61b84a98" data-repository-sha="61b84a983d6cf9a8a750883e455a992f11e86393"><script>globalThis.__REPOSITORY_SHA__="61b84a983d6cf9a8a750883e455a992f11e86393";globalThis.__REPOSITORY_BUILD__="61b84a98";</script><script>(()=>{
+<body data-repository-build="60d53999" data-repository-sha="60d5399943bb0a1bfe5a7f92457938a7bb624142"><script>globalThis.__REPOSITORY_SHA__="60d5399943bb0a1bfe5a7f92457938a7bb624142";globalThis.__REPOSITORY_BUILD__="60d53999";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1851,7 +1851,12 @@ function buildBetwixtable({name='betwixtable',parent=scene,at=null,padding=.18,b
     node.worldToLocal(center);target.position.copy(center);
     target.scale.set(Math.max(.45,size.x+padding*2),Math.max(.45,size.y+padding*2),Math.max(.45,size.z+padding*2));
   }
-  const spatial={node,presentation,target,seat,fit};
+  function focus(){
+    if(focusedWorkshopObject===node)return true;
+    if(focusedWorkshopObject)dismissWorkshopFocus();else beginWorkshopFocus(node,true);
+    return true;
+  }
+  const spatial={node,presentation,target,seat,fit,focus};
   node.userData.betwixtable=spatial;
   if(build)build(presentation,spatial);
   seat();fit();
@@ -2617,6 +2622,14 @@ function workshopTap(x,y){
   const r=canvas.getBoundingClientRect();
   pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
   raycaster.setFromCamera(pointerNDC,camera);
+  // Construction-first Betwixtables are focusable by contract, not by bespoke tap wiring.
+  const builtBetwixtables=[];
+  scene.traverse(o=>{if(o.userData?.betwixtable?.target&&o.userData.betwixtable.focus)builtBetwixtables.push(o)});
+  for(const b of builtBetwixtables){
+    const t=b.userData.betwixtable.target;t.visible=true;
+    const hit=raycaster.intersectObject(t,false).length>0;t.visible=false;
+    if(hit){b.userData.betwixtable.focus();window.vestibuleDirty=true;return true}
+  }
   chemTapTarget.visible=true;
   const chemHit=raycaster.intersectObject(chemTapTarget,false).length>0;
   chemTapTarget.visible=false;
