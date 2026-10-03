@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="a807c17c" data-repository-sha="a807c17c52e1a3d43c7a143f3ec74c1ec63dfdd7"><script>globalThis.__REPOSITORY_SHA__="a807c17c52e1a3d43c7a143f3ec74c1ec63dfdd7";globalThis.__REPOSITORY_BUILD__="a807c17c";</script><script>(()=>{
+<body data-repository-build="ca8cf910" data-repository-sha="ca8cf9101531c077649d7db912ff30d469921122"><script>globalThis.__REPOSITORY_SHA__="ca8cf9101531c077649d7db912ff30d469921122";globalThis.__REPOSITORY_BUILD__="ca8cf910";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1829,7 +1829,14 @@ function buildBetwixtable({name='betwixtable',parent=scene,at=null,padding=.18,b
   }
   function fit(){
     node.updateMatrixWorld(true);
-    const box=new THREE.Box3().setFromObject(presentation);
+    // Fit rendered presentation geometry, but not human-only Witness embodiment or
+    // instrumentation. A sensor needle must never turn into a giant tap volume.
+    const box=new THREE.Box3(),part=new THREE.Box3();
+    presentation.traverse(o=>{
+      if(!o.visible||(!o.isMesh&&!o.isLine&&!o.isPoints))return;
+      for(let n=o;n&&n!==presentation;n=n.parent)if(n.userData?.witnessBody)return;
+      part.setFromObject(o);if(!part.isEmpty())box.union(part);
+    });
     if(box.isEmpty()){target.position.set(0,0,0);target.scale.setScalar(.45);return}
     const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     node.worldToLocal(center);target.position.copy(center);
@@ -4089,6 +4096,8 @@ globalThis.boundedWitness=createBoundedWitness({
   position:[-1.72,1.05,1.28],
   forward:[0,0,-1]
 });
+// Late experiment members must not leave the Betwixtable focus shell stale.
+neptunianCrossing001Betwixtable.userData.betwixtable.fit();
 
 window.vestibule={
   scene,camera,renderer,presences,betwixtContent,
