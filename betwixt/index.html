@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="de18edbb" data-repository-sha="de18edbb457d82a1e2539d0692a1effb1ce87d7e"><script>globalThis.__REPOSITORY_SHA__="de18edbb457d82a1e2539d0692a1effb1ce87d7e";globalThis.__REPOSITORY_BUILD__="de18edbb";</script><script>(()=>{
+<body data-repository-build="11af174a" data-repository-sha="11af174a1e9d9c3d6dc8ecac726c3f897902db72"><script>globalThis.__REPOSITORY_SHA__="11af174a1e9d9c3d6dc8ecac726c3f897902db72";globalThis.__REPOSITORY_BUILD__="11af174a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3758,7 +3758,7 @@ addEventListener('resize',()=>{
 });
 
 renderer.setAnimationLoop((now)=>{
-  jovianBetwixtable.userData.jovian?.update(now);
+  jovianBetwixtable.userData.betwixtable.presentation.userData.jovian?.update(now);
   const thoughtformCage=workshopTabletopBetwixtable.getObjectByName('thoughtform:semantic-snapping-primitives')?.userData.gimbalCage;
   if(thoughtformCage){thoughtformCage.rotation.y=now*.00018;thoughtformCage.rotation.x=Math.sin(now*.00007)*.10;window.vestibuleDirty=true;}
   const chemThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:chemlab-cold-boot');
