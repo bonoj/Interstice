@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="338ff2dc" data-repository-sha="338ff2dcde589543cd4d938fd22c932fde53d85a"><script>globalThis.__REPOSITORY_SHA__="338ff2dcde589543cd4d938fd22c932fde53d85a";globalThis.__REPOSITORY_BUILD__="338ff2dc";</script><script>(()=>{
+<body data-repository-build="459a816c" data-repository-sha="459a816c1d2760272aaf6e58b9cd1838c8440a32"><script>globalThis.__REPOSITORY_SHA__="459a816c1d2760272aaf6e58b9cd1838c8440a32";globalThis.__REPOSITORY_BUILD__="459a816c";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1938,12 +1938,12 @@ for(const y of [-.17,.17]){
 }
 const fuseCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,.31,0),new THREE.Vector3(.07,.40,0),new THREE.Vector3(.04,.52,.03)]);
 const fuse=new THREE.Mesh(new THREE.TubeGeometry(fuseCurve,8,.018,5,false),dynFuse);dynamite.add(fuse);
-dynamite.position.copy(chemHome);
+dynamite.scale.setScalar(1.28);dynamite.position.copy(chemHome);
 const dynamiteTapTarget=makeBetwixtable(dynamite);
 
-const microscope=new THREE.Group();microscope.name='spell:microscope';microscope.visible=false;chemSpell.add(microscope);
+const microscope=new THREE.Group();microscope.name='spell:microscope';microscope.visible=false;microscope.scale.setScalar(.82);chemSpell.add(microscope);
 const microBrass=new THREE.MeshStandardMaterial({color:0xb4772e,roughness:.28,metalness:.76});
-const microDark=new THREE.MeshStandardMaterial({color:0x303331,roughness:.42,metalness:.58});
+const microDark=new THREE.MeshStandardMaterial({color:0x777b7a,roughness:.34,metalness:.68});
 const microGlass=new THREE.MeshPhysicalMaterial({color:0x8fb8ba,roughness:.12,metalness:0,transparent:true,opacity:.38,transmission:.45,depthWrite:false});
 // Tiny model-forward construction helper: define simple forms in elevation-like
 // coordinates, then derive their 3D placement from named anchors. The same spec can
