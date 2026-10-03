@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="421c5b21" data-repository-sha="421c5b21487ddcb804336c6069c0874bdaaa54b5"><script>globalThis.__REPOSITORY_SHA__="421c5b21487ddcb804336c6069c0874bdaaa54b5";globalThis.__REPOSITORY_BUILD__="421c5b21";</script><script>(()=>{
+<body data-repository-build="e0488a0f" data-repository-sha="e0488a0fd54b7f09eb4aafb131788fc3d5e34d27"><script>globalThis.__REPOSITORY_SHA__="e0488a0fd54b7f09eb4aafb131788fc3d5e34d27";globalThis.__REPOSITORY_BUILD__="e0488a0f";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1807,6 +1807,14 @@ queueMicrotask(installWorkshopCrucibleContainerSpell);
 // First spatial spell: the Crucible container has a physical handle in quiet
 // Betwixt. Geoglass uses the Workshop material vocabulary; the bearings inside
 // borrow Crucible's dark/warm/cyan feel. It still delegates to the resident ⚗️.
+function makeBetwixtable(obj,radius=.64){
+  const targetMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(radius,12,8),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
+  );
+  targetMesh.visible=false;targetMesh.userData.betwixtable=true;obj.add(targetMesh);return targetMesh;
+}
+
 const workshopCrucibleOrb=new THREE.Group();
 workshopCrucibleOrb.name='spell-orb:crucible';
 const workshopCrucibleOrbGlass=new THREE.MeshPhysicalMaterial({
@@ -1821,12 +1829,7 @@ workshopCrucibleOrbMesh.castShadow=true;
 workshopCrucibleOrbMesh.userData.workshopCrucibleOrb=true;
 workshopCrucibleOrb.add(workshopCrucibleOrbMesh);
 // Invisible forgiving touch volume; visual geometry remains exactly .50.
-const workshopCrucibleOrbTapTarget=new THREE.Mesh(
-  new THREE.SphereGeometry(.64,12,8),
-  new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
-);
-workshopCrucibleOrbTapTarget.visible=false;
-workshopCrucibleOrb.add(workshopCrucibleOrbTapTarget);
+const workshopCrucibleOrbTapTarget=makeBetwixtable(workshopCrucibleOrb);
 const workshopCrucibleBearingGeo=new THREE.SphereGeometry(.072,10,7);
 const workshopCrucibleBearingMats=[
   new THREE.MeshStandardMaterial({color:0x252724,roughness:.34,metalness:.58}),
@@ -1929,8 +1932,10 @@ const dynOutlineMat=new THREE.LineBasicMaterial({color:0x090909,transparent:true
 for(const [x,z] of dynStickPositions){
   const stick=new THREE.Mesh(dynStickGeo,dynRed);
   stick.position.set(x,0,z);stick.castShadow=true;dynamite.add(stick);
-  const outline=new THREE.LineSegments(new THREE.EdgesGeometry(dynStickGeo),dynOutlineMat);
-  outline.position.copy(stick.position);dynamite.add(outline);
+  const topEdge=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(
+    Array.from({length:10},(_,i)=>{const a=i*Math.PI*2/10;return new THREE.Vector3(x+Math.cos(a)*.086,.312,z+Math.sin(a)*.086)})
+  ),dynOutlineMat);
+  dynamite.add(topEdge);
 }
 for(const y of [-.17,.17]){
   const band=new THREE.Mesh(new THREE.TorusGeometry(.255,.025,6,18),dynDark);
@@ -1939,8 +1944,7 @@ for(const y of [-.17,.17]){
 const fuseCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,.31,0),new THREE.Vector3(.07,.40,0),new THREE.Vector3(.04,.52,.03)]);
 const fuse=new THREE.Mesh(new THREE.TubeGeometry(fuseCurve,8,.018,5,false),dynFuse);dynamite.add(fuse);
 dynamite.position.copy(chemHome);
-const dynamiteTapTarget=new THREE.Mesh(new THREE.SphereGeometry(.52,10,7),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-dynamiteTapTarget.visible=false;dynamite.add(dynamiteTapTarget);
+const dynamiteTapTarget=makeBetwixtable(dynamite);
 
 const microscope=new THREE.Group();microscope.name='spell:microscope';microscope.visible=false;chemSpell.add(microscope);
 const microBrass=new THREE.MeshStandardMaterial({color:0xb4772e,roughness:.28,metalness:.76});
@@ -1951,8 +1955,7 @@ const microArm=new THREE.Mesh(new THREE.TorusGeometry(.25,.055,7,18,Math.PI*1.25
 const microTube=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,.48,10),microDark);microTube.rotation.z=-.42;microTube.position.set(-.04,.52,0);microscope.add(microTube);
 const microLens=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,.055,12),microGlass);microLens.rotation.z=-.42;microLens.position.set(.055,.31,0);microscope.add(microLens);
 const microStage=new THREE.Mesh(new THREE.BoxGeometry(.42,.045,.32),microBrass);microStage.position.set(.02,.23,0);microscope.add(microStage);
-const microscopeTapTarget=new THREE.Mesh(new THREE.SphereGeometry(.58,10,7),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-microscopeTapTarget.visible=false;microscope.add(microscopeTapTarget);
+const microscopeTapTarget=makeBetwixtable(microscope);
 
 const chemBurstGroup=new THREE.Group();chemBurstGroup.name='effect:chem-discovery';scene.add(chemBurstGroup);
 const chemBurstGeo=new THREE.SphereGeometry(.055,6,4);
