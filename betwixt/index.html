@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="756e4d79" data-repository-sha="756e4d790ed8f08bf4142560946fd2be9ca8c1f9"><script>globalThis.__REPOSITORY_SHA__="756e4d790ed8f08bf4142560946fd2be9ca8c1f9";globalThis.__REPOSITORY_BUILD__="756e4d79";</script><script>(()=>{
+<body data-repository-build="8eb0ae93" data-repository-sha="8eb0ae936fba36f3c344e904a9ce4d1a595c6e49"><script>globalThis.__REPOSITORY_SHA__="8eb0ae936fba36f3c344e904a9ce4d1a595c6e49";globalThis.__REPOSITORY_BUILD__="8eb0ae93";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1928,12 +1928,7 @@ const dynFuse=new THREE.MeshStandardMaterial({color:0x443a2d,roughness:1});
 const dynStickGeo=new THREE.CylinderGeometry(.085,.085,.62,10);
 const dynStickPositions=[[0,0]];
 for(let i=0;i<6;i++){const a=i*Math.PI/3;dynStickPositions.push([Math.cos(a)*.155,Math.sin(a)*.155])}
-// Cheap illustrated contour: slightly inflated backfaces behind the real form.
-// This outlines silhouette rather than exposing mesh topology.
-const dynInk=new THREE.MeshBasicMaterial({color:0x090909,side:THREE.BackSide});
 for(const [x,z] of dynStickPositions){
-  const ink=new THREE.Mesh(dynStickGeo,dynInk);
-  ink.position.set(x,0,z);ink.scale.set(1.09,1.025,1.09);dynamite.add(ink);
   const stick=new THREE.Mesh(dynStickGeo,dynRed);
   stick.position.set(x,0,z);stick.castShadow=true;dynamite.add(stick);
 }
@@ -2042,6 +2037,14 @@ const workshopPale=new THREE.MeshStandardMaterial({color:0xb9b7aa,roughness:.75,
 const workshopWarm=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.78,metalness:.2});
 const workshopBlack=new THREE.MeshStandardMaterial({color:0x111312,roughness:.65,metalness:.35});
 const workshopMats=[workshopMetal,workshopDark,workshopWood,workshopPale,workshopWarm,workshopBlack];
+
+// Workshop material vocabulary, retained from the dynamite probe.
+// Cheap silhouette ink: render a slightly inflated copy with backfaces only.
+// Not applied by default; overlapping clustered forms need composition-aware treatment.
+const workshopInkMaterial=new THREE.MeshBasicMaterial({color:0x090909,side:THREE.BackSide});
+function workshopInkedForm(geometry,scale=1.09){
+  const ink=new THREE.Mesh(geometry,workshopInkMaterial);ink.scale.set(scale,1.025,scale);return ink;
+}
 
 function workshopBox(g,x,y,z,sx,sy,sz,m=workshopMetal,rx=0,ry=0,rz=0){
   const q=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);q.position.set(x,y,z);q.rotation.set(rx,ry,rz);q.castShadow=true;q.receiveShadow=true;g.add(q);return q;
