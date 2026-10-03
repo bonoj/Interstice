@@ -12,7 +12,10 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Publication is ordered. A newer source commit may wait, but it must not cancel
+  # a deployment already crossing the public membrane and leave Pages serving an
+  # arbitrarily old completed revision during rapid iteration.
+  cancel-in-progress: false
 
 jobs:
   deploy:
