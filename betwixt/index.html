@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="bd43a2b6" data-repository-sha="bd43a2b64052fbb0ddecb005f200614478ca66ff"><script>globalThis.__REPOSITORY_SHA__="bd43a2b64052fbb0ddecb005f200614478ca66ff";globalThis.__REPOSITORY_BUILD__="bd43a2b6";</script><script>(()=>{
+<body data-repository-build="74f40047" data-repository-sha="74f40047e3853bf09be3f631139e21a32cd31555"><script>globalThis.__REPOSITORY_SHA__="74f40047e3853bf09be3f631139e21a32cd31555";globalThis.__REPOSITORY_BUILD__="74f40047";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1820,6 +1820,12 @@ const workshopCrucibleOrbMesh=new THREE.Mesh(
 workshopCrucibleOrbMesh.castShadow=true;
 workshopCrucibleOrbMesh.userData.workshopCrucibleOrb=true;
 workshopCrucibleOrb.add(workshopCrucibleOrbMesh);
+// Workshop geoglass specification: translucent face with restrained semi-hard facets.
+const workshopCrucibleOrbEdges=new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.502,3),24),
+  new THREE.LineBasicMaterial({color:0x667879,transparent:true,opacity:.42})
+);
+workshopCrucibleOrb.add(workshopCrucibleOrbEdges);
 
 const workshopCrucibleBearingGeo=new THREE.SphereGeometry(.072,10,7);
 const workshopCrucibleBearingMats=[
