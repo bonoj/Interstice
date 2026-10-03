@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="4b973e47" data-repository-sha="4b973e4735c5615eb5319891e7490da1649c246a"><script>globalThis.__REPOSITORY_SHA__="4b973e4735c5615eb5319891e7490da1649c246a";globalThis.__REPOSITORY_BUILD__="4b973e47";</script><script>(()=>{
+<body data-repository-build="6878792a" data-repository-sha="6878792a0b58e3065a4af7685c22c8f46b431afb"><script>globalThis.__REPOSITORY_SHA__="6878792a0b58e3065a4af7685c22c8f46b431afb";globalThis.__REPOSITORY_BUILD__="6878792a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2014,7 +2014,7 @@ function detonateChemSpell(){
   }
   // Replace presentation inside the persistent focused Betwixtable.
   microscope.position.copy(dynamite.position);microscope.visible=true;
-  chemBetwixtable.userData.betwixtable.fit();
+  floorWorkshopObject(microscope);chemBetwixtable.userData.betwixtable.fit();
   installChemResident();window.vestibuleDirty=true;return true;
 }
 function openChemLab(){
@@ -2482,12 +2482,14 @@ for(const [,obj] of controls.slice(-2))obj.visible=false;
 const specimens=[];
 let focusedWorkshopObject=null,workshopFocusMotion=null,workshopObserverReturn=null;
 function floorWorkshopObject(obj){
-  obj.updateMatrixWorld(true);
+  // Ground by the object's actual rendered bounds, in parent space. Always correct
+  // both floating and penetration; callers never hand-author a Y offset.
+  obj.updateWorldMatrix(true,true);
   const box=new THREE.Box3().setFromObject(obj);
-  if(box.min.y<GROUND_Y)obj.position.y+=GROUND_Y-box.min.y;
-  obj.updateMatrixWorld(true);
+  obj.position.y+=GROUND_Y-box.min.y;
+  obj.updateWorldMatrix(true,true);
   const check=new THREE.Box3().setFromObject(obj);
-  if(check.min.y<GROUND_Y-1e-6)throw Error('Workshop floor invariant failed: '+obj.name);
+  if(Math.abs(check.min.y-GROUND_Y)>1e-5)throw Error('Workshop floor invariant failed: '+obj.name);
 }
 function workshopPresentationPosition(obj){
   const center=new THREE.Box3().setFromObject(obj).getCenter(new THREE.Vector3());
