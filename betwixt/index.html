@@ -61,7 +61,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="57409ea4" data-repository-sha="57409ea4f74972ca4db148ce6345c25060f0b109"><script>globalThis.__REPOSITORY_SHA__="57409ea4f74972ca4db148ce6345c25060f0b109";globalThis.__REPOSITORY_BUILD__="57409ea4";</script><script>(()=>{
+<body data-repository-build="421c5b21" data-repository-sha="421c5b21487ddcb804336c6069c0874bdaaa54b5"><script>globalThis.__REPOSITORY_SHA__="421c5b21487ddcb804336c6069c0874bdaaa54b5";globalThis.__REPOSITORY_BUILD__="421c5b21";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1925,9 +1925,12 @@ const dynFuse=new THREE.MeshStandardMaterial({color:0x443a2d,roughness:1});
 const dynStickGeo=new THREE.CylinderGeometry(.085,.085,.62,10);
 const dynStickPositions=[[0,0]];
 for(let i=0;i<6;i++){const a=i*Math.PI/3;dynStickPositions.push([Math.cos(a)*.155,Math.sin(a)*.155])}
+const dynOutlineMat=new THREE.LineBasicMaterial({color:0x090909,transparent:true,opacity:.92});
 for(const [x,z] of dynStickPositions){
   const stick=new THREE.Mesh(dynStickGeo,dynRed);
   stick.position.set(x,0,z);stick.castShadow=true;dynamite.add(stick);
+  const outline=new THREE.LineSegments(new THREE.EdgesGeometry(dynStickGeo),dynOutlineMat);
+  outline.position.copy(stick.position);dynamite.add(outline);
 }
 for(const y of [-.17,.17]){
   const band=new THREE.Mesh(new THREE.TorusGeometry(.255,.025,6,18),dynDark);
