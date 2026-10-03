@@ -38,16 +38,18 @@ jobs:
         run: |
           set -euo pipefail
           expected="$(tr -d '\r\n' < betwixt/.repository-sha)"
-          test -n "$expected"
+          test "${#expected}" = 40
+          build="${expected:0:8}"
           url="${PAGE_URL%/}/betwixt/?verify=${expected}"
           for attempt in {1..12}; do
             body="$(curl --fail --silent --show-error --location --header 'Cache-Control: no-cache' "$url" || true)"
-            if printf '%s' "$body" | grep -Fq "data-repository-sha=\"${expected}\""; then
-              echo "Deployed Betwixt serves Repository ${expected}."
+            if printf '%s' "$body" | grep -Fq "data-repository-sha=\"${expected}\"" &&
+               printf '%s' "$body" | grep -Fq "data-repository-build=\"${build}\""; then
+              echo "LIVE Betwixt build ${build}: public Pages serves exact Repository ${expected}."
               exit 0
             fi
-            echo "Waiting for deployed Betwixt provenance (attempt ${attempt}/12)..."
+            echo "NOT LIVE YET: public Pages does not serve Betwixt build ${build} (attempt ${attempt}/12)."
             sleep 5
           done
-          echo "Deployed Betwixt does not serve expected Repository ${expected}." >&2
+          echo "NOT LIVE: public Pages failed exact provenance/build verification for Betwixt ${build}." >&2
           exit 1
