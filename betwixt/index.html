@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="4a548b77" data-repository-sha="4a548b7732056f8bae74444a46b5ec7c3f6c4c84"><script>globalThis.__REPOSITORY_SHA__="4a548b7732056f8bae74444a46b5ec7c3f6c4c84";globalThis.__REPOSITORY_BUILD__="4a548b77";</script><script>(()=>{
+<body data-repository-build="14811a49" data-repository-sha="14811a499bfa35a531fb791413c77640155d8b54"><script>globalThis.__REPOSITORY_SHA__="14811a499bfa35a531fb791413c77640155d8b54";globalThis.__REPOSITORY_BUILD__="14811a49";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2035,7 +2035,7 @@ function seatBetwixtPresentation(obj){
 }
 seatBetwixtPresentation(dynamite);seatBetwixtPresentation(microscope);
 // Presentation geometry is local to its Betwixtable. The shell is the sole spatial snapping/grounding boundary.
-const chemBetwixtable=makeBetwixtable(chemPresentation,{name:'chem-discovery'});chemBetwixtable.position.copy(chemHome);floorWorkshopObject(chemBetwixtable);const chemTapTarget=chemBetwixtable.userData.betwixtable.target;
+const chemBetwixtable=makeBetwixtable(chemPresentation,{name:'chem-discovery',interact:()=>tapChemSpell()});chemBetwixtable.position.copy(chemHome);floorWorkshopObject(chemBetwixtable);
 
 const chemBurstGroup=new THREE.Group();chemBurstGroup.name='effect:chem-discovery';scene.add(chemBurstGroup);
 const chemBurstGeo=new THREE.SphereGeometry(.055,6,4);
@@ -3494,10 +3494,6 @@ function workshopTap(x,y){
     if(b===relationalInspectionBetwixtable)showMoleculeCard(true);
     window.vestibuleDirty=true;return true;
   }
-  chemTapTarget.visible=true;
-  const chemHit=raycaster.intersectObject(chemTapTarget,false).length>0;
-  chemTapTarget.visible=false;
-  if(chemHit){tapChemSpell();window.vestibuleDirty=true;return true}
   // Raycast the larger invisible volume explicitly; invisible objects are skipped by normal rendering.
   workshopCrucibleOrbTapTarget.visible=true;
   const crucibleOrbHit=raycaster.intersectObject(workshopCrucibleOrbTapTarget,false).length>0;
