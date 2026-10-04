@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="6bf3dbd0" data-repository-sha="6bf3dbd0b1ddfa958ef29e6c67da50f8447d759c"><script>globalThis.__REPOSITORY_SHA__="6bf3dbd0b1ddfa958ef29e6c67da50f8447d759c";globalThis.__REPOSITORY_BUILD__="6bf3dbd0";</script><script>(()=>{
+<body data-repository-build="f419dceb" data-repository-sha="f419dceb534c3c8cce63de36b3ea778b5fcafa7f"><script>globalThis.__REPOSITORY_SHA__="f419dceb534c3c8cce63de36b3ea778b5fcafa7f";globalThis.__REPOSITORY_BUILD__="f419dceb";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -4271,6 +4271,7 @@ renderer.setAnimationLoop((now)=>{
   workshopTabletopBetwixtable.userData.betwixtable.presentation.children.find(o=>o.name==='thoughtform:neptunian-caretaker-carrier')?.userData.animate?.(now);
   jovianBetwixtable.userData.betwixtable.presentation.userData.jovian?.update(now);
   jovianBetwixtable.userData.betwixtable.presentation.userData.jovian?.updateBearings(now);
+  jovianBetwixtable.userData.betwixtable.presentation.userData.jovian?.carrier?.update(now);
   const thoughtformCage=workshopTabletopBetwixtable.getObjectByName('thoughtform:semantic-snapping-primitives')?.userData.gimbalCage;
   if(thoughtformCage){thoughtformCage.rotation.y=now*.00018;thoughtformCage.rotation.x=Math.sin(now*.00007)*.10;window.vestibuleDirty=true;}
   const nepThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:neptunian-caretaker-carrier');
