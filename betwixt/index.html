@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="a57b0358" data-repository-sha="a57b035851ab9dfeb474cd7fc5503428e2a6d5de"><script>globalThis.__REPOSITORY_SHA__="a57b035851ab9dfeb474cd7fc5503428e2a6d5de";globalThis.__REPOSITORY_BUILD__="a57b0358";</script><script>(()=>{
+<body data-repository-build="79576391" data-repository-sha="7957639104bb15b3e044d4d0c4cb3de2c0c150b9"><script>globalThis.__REPOSITORY_SHA__="7957639104bb15b3e044d4d0c4cb3de2c0c150b9";globalThis.__REPOSITORY_BUILD__="79576391";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1802,12 +1802,21 @@ function makeBetwixtable(content,{name=content.name||'betwixtable',padding=.18,i
   content.position.set(0,0,0);content.quaternion.identity();content.scale.set(1,1,1);node.add(content);
   const target=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   target.visible=false;target.userData.betwixtable=true;node.add(target);
+  function bounds(){
+    node.updateMatrixWorld(true);
+    return new THREE.Box3().setFromObject(content);
+  }
   function fit(){
-    const box=new THREE.Box3().setFromObject(content),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+    const box=bounds(),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     node.worldToLocal(center);target.position.copy(center);
     target.scale.set(Math.max(.45,size.x+padding*2),Math.max(.45,size.y+padding*2),Math.max(.45,size.z+padding*2));
   }
-  fit();node.userData.betwixtable={content,target,fit,interact};return node;
+  function focus(){
+    if(focusedWorkshopObject===node)return true;
+    if(focusedWorkshopObject)dismissWorkshopFocus();else beginWorkshopFocus(node,true);
+    return true;
+  }
+  fit();node.userData.betwixtable={node,content,presentation:content,target,bounds,fit,focus,interact};return node;
 }
 
 
