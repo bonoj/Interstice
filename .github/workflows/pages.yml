@@ -43,8 +43,8 @@ jobs:
           url="${PAGE_URL%/}/betwixt/?verify=${expected}"
           for attempt in {1..12}; do
             body="$(curl --fail --silent --show-error --location --header 'Cache-Control: no-cache' "$url" || true)"
-            if printf '%s' "$body" | grep -Fq "data-repository-sha=\"${expected}\"" &&
-               printf '%s' "$body" | grep -Fq "data-repository-build=\"${build}\""; then
+            if grep -Fq "data-repository-sha=\"${expected}\"" <<<"$body" &&
+               grep -Fq "data-repository-build=\"${build}\"" <<<"$body"; then
               echo "LIVE Betwixt build ${build}: public Pages serves exact Repository ${expected}."
               exit 0
             fi
