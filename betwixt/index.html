@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="fd83d409" data-repository-sha="fd83d4092731ae7e33b2daa89c55ced690b644f6"><script>globalThis.__REPOSITORY_SHA__="fd83d4092731ae7e33b2daa89c55ced690b644f6";globalThis.__REPOSITORY_BUILD__="fd83d409";</script><script>(()=>{
+<body data-repository-build="3a0d1b8a" data-repository-sha="3a0d1b8a58eeab60fac523fe5313aaf6b78e8ed4"><script>globalThis.__REPOSITORY_SHA__="3a0d1b8a58eeab60fac523fe5313aaf6b78e8ed4";globalThis.__REPOSITORY_BUILD__="3a0d1b8a";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3394,11 +3394,15 @@ function telescopeWorkshopFocus(incoming){
   const outgoingHome=saved.position.clone();
   const incomingHome=incoming.position.clone();
   const incomingFromWorld=incoming.getWorldPosition(new THREE.Vector3());
-  const seatWorld=outgoing.getWorldPosition(new THREE.Vector3());
+  const outgoingSpatial=outgoing.userData.betwixtable,incomingSpatial=incoming.userData.betwixtable;
+  const seatCenterWorld=outgoingSpatial.bounds().getCenter(new THREE.Vector3());
+  const incomingCenterWorld=incomingSpatial.bounds().getCenter(new THREE.Vector3());
+  const incomingOriginWorld=incoming.getWorldPosition(new THREE.Vector3());
+  const seatOriginWorld=incomingOriginWorld.clone().add(seatCenterWorld).sub(incomingCenterWorld);
   workshopFocusMotion={
     telescope:true,outgoing,incoming,
     outgoingFrom:outgoing.position.clone(),outgoingTo:outgoingHome,
-    incomingFromWorld,seatWorld,incomingHome,
+    incomingFromWorld,seatWorld:seatOriginWorld,incomingHome,
     fromTarget:target.clone(),toTarget:target.clone(),
     fromCameraPosition:camera.position.clone(),toCameraPosition:camera.position.clone(),
     started:performance.now(),duration:THREE.MathUtils.clamp(390+incomingFromWorld.distanceTo(seatWorld)*22,430,610)
