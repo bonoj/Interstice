@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="3a0d1b8a" data-repository-sha="3a0d1b8a58eeab60fac523fe5313aaf6b78e8ed4"><script>globalThis.__REPOSITORY_SHA__="3a0d1b8a58eeab60fac523fe5313aaf6b78e8ed4";globalThis.__REPOSITORY_BUILD__="3a0d1b8a";</script><script>(()=>{
+<body data-repository-build="4a548b77" data-repository-sha="4a548b7732056f8bae74444a46b5ec7c3f6c4c84"><script>globalThis.__REPOSITORY_SHA__="4a548b7732056f8bae74444a46b5ec7c3f6c4c84";globalThis.__REPOSITORY_BUILD__="4a548b77";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3405,7 +3405,7 @@ function telescopeWorkshopFocus(incoming){
     incomingFromWorld,seatWorld:seatOriginWorld,incomingHome,
     fromTarget:target.clone(),toTarget:target.clone(),
     fromCameraPosition:camera.position.clone(),toCameraPosition:camera.position.clone(),
-    started:performance.now(),duration:THREE.MathUtils.clamp(390+incomingFromWorld.distanceTo(seatWorld)*22,430,610)
+    started:performance.now(),duration:THREE.MathUtils.clamp(390+incomingFromWorld.distanceTo(seatOriginWorld)*22,430,610)
   };
   saved.position=incomingHome;
   focusedWorkshopObject=incoming;
