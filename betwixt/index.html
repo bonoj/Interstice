@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="3c0776a3" data-repository-sha="3c0776a3a3f117e5136912ac2e51d54dc209d8a1"><script>globalThis.__REPOSITORY_SHA__="3c0776a3a3f117e5136912ac2e51d54dc209d8a1";globalThis.__REPOSITORY_BUILD__="3c0776a3";</script><script>(()=>{
+<body data-repository-build="1c153bfe" data-repository-sha="1c153bfe9504908c65c25bbca68485e984777514"><script>globalThis.__REPOSITORY_SHA__="1c153bfe9504908c65c25bbca68485e984777514";globalThis.__REPOSITORY_BUILD__="1c153bfe";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1764,80 +1764,6 @@ function setWorkshopCrucibleEnabled(enabled,button){
   workshopBearingLast=performance.now();window.vestibuleDirty=true;return workshopCrucibleEnabled;
 }
 function toggleWorkshopCrucible(button){return workshopCrucibleEnabled?enterBetwixt():enterPlace('crucible')}
-
-// Workshop miniature bench: one orienting Twixt plus a deliberately tiny primitive vocabulary.
-// The specimens are ordinary Workshop inhabitants: no targeting, behavior, or semantics yet.
-const miniatureWhiteMat=new THREE.MeshStandardMaterial({color:0xeeeDE8,roughness:.82,metalness:0});
-const miniatureDarkMat=new THREE.MeshStandardMaterial({color:0x596066,roughness:.62,metalness:.12});
-// Miniatures are constructed before the Crucible bearing palette exists; use the same
-// established material values without creating an initialization-order dependency.
-const miniatureCyanMat=new THREE.MeshStandardMaterial({color:0x62aeb4,roughness:.26,metalness:.46});
-const miniatureOrangeMat=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.30,metalness:.50});
-const miniatureMats={white:miniatureWhiteMat,dark:miniatureDarkMat,cyan:miniatureCyanMat,orange:miniatureOrangeMat,brass:workshopCrucibleStandMat};
-
-function miniaturePart(parent,{kind='block',size=[.2,.2,.2],at=[0,0,0],rot=[0,0,0],mat='white'}={}){
-  let geo;
-  if(kind==='post'||kind==='bead')geo=kind==='post'?new THREE.CylinderGeometry(size[0],size[0],size[1],8):new THREE.SphereGeometry(size[0],10,7);
-  else if(kind==='ring')geo=new THREE.TorusGeometry(size[0],size[1],8,24);
-  else geo=new THREE.BoxGeometry(...size);
-  const mesh=new THREE.Mesh(geo,miniatureMats[mat]||miniatureWhiteMat);
-  mesh.position.set(...at);mesh.rotation.set(...rot);mesh.castShadow=true;parent.add(mesh);return mesh;
-}
-function buildMiniature(parent,parts){for(const part of parts)miniaturePart(parent,part);}
-
-const miniatureOrientTwixt=buildBetwixtable({
-  name:'miniature-orient',
-  parent:legacyWorkshop,
-  at:new THREE.Vector3(0,GROUND_Y,0),
-  padding:.24,
-  build:(root)=>{
-    miniaturePart(root,{kind:'ring',size:[.34,.026],at:[0,.34,0],rot:[Math.PI/2,0,0],mat:'brass'});
-    miniaturePart(root,{kind:'post',size:[.026,.34],at:[0,.17,0],mat:'brass'});
-    miniaturePart(root,{kind:'bead',size:[.085],at:[0,.39,0],mat:'cyan'});
-    miniaturePart(root,{kind:'block',size:[.16,.035,.16],at:[0,.018,0],mat:'white'});
-  }
-});
-miniatureOrientTwixt.userData.betwixtable.focusDistance=3.15;
-
-const miniatureSpecimens=[
-  {at:[-3.2,0,-1.4],parts:[
-    {kind:'post',size:[.035,.72],at:[0,.36,0]},
-    {kind:'block',size:[.11,.07,.11],at:[0,.75,0],mat:'orange'}
-  ]},
-  {at:[-1.6,0,-2.5],parts:[
-    {kind:'block',size:[.28,.12,.24],at:[0,.06,0]},
-    {kind:'block',size:[.20,.16,.18],at:[.18,.08,.05]},
-    {kind:'block',size:[.14,.22,.14],at:[-.14,.11,-.09],mat:'dark'},
-    {kind:'bead',size:[.065],at:[.04,.22,.04],mat:'cyan'}
-  ]},
-  {at:[1.7,0,-2.4],parts:[
-    {kind:'block',size:[.16,.12,.18],at:[-.48,.06,0]},
-    {kind:'block',size:[.16,.12,.18],at:[.48,.06,0]},
-    {kind:'block',size:[1.02,.055,.07],at:[0,.24,0],mat:'dark'},
-    {kind:'block',size:[.10,.08,.10],at:[.55,.24,0],mat:'orange'}
-  ]},
-  {at:[3.4,0,-.8],parts:[
-    {kind:'ring',size:[.38,.026],at:[0,.035,0],rot:[Math.PI/2,0,0]},
-    {kind:'block',size:[.18,.10,.16],at:[-.13,.08,.02]},
-    {kind:'block',size:[.12,.15,.12],at:[.13,.10,-.08],mat:'cyan'},
-    {kind:'block',size:[.08,.20,.08],at:[.02,.12,.14],mat:'orange'}
-  ]},
-  {at:[2.4,0,1.9],parts:[
-    {kind:'block',size:[.38,.06,.32],at:[0,.03,0]},
-    {kind:'post',size:[.028,.58],at:[0,.32,0],mat:'dark'},
-    {kind:'block',size:[.14,.06,.14],at:[0,.64,0],mat:'orange'}
-  ]},
-  {at:[-2.5,0,2.0],parts:[
-    {kind:'block',size:[.18,.10,.16],at:[-.24,.05,-.10]},
-    {kind:'block',size:[.12,.18,.12],at:[.10,.09,.08]},
-    {kind:'post',size:[.025,.34],at:[.34,.17,-.06]},
-    {kind:'bead',size:[.055],at:[-.04,.20,-.22],mat:'cyan'}
-  ]}
-];
-for(const [i,spec] of miniatureSpecimens.entries()){
-  const g=new THREE.Group();g.name='workshop:miniature-specimen:'+i;g.position.set(...spec.at);legacyWorkshop.add(g);buildMiniature(g,spec.parts);
-}
-
 let currentPlace='betwixt';
 const placeDefinitions={
   betwixt:{object:betwixtPlace,title:'🌀 BETWIXT'},
