@@ -63,13 +63,12 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="78c29315" data-repository-sha="78c29315b13820337d0836f3fc72a57e815398ba"><script>globalThis.__REPOSITORY_SHA__="78c29315b13820337d0836f3fc72a57e815398ba";globalThis.__REPOSITORY_BUILD__="78c29315";</script><script>(()=>{
+<body data-repository-build="dfe6dc69" data-repository-sha="dfe6dc69fc65ea1de558717c0bd7c97115005b15"><script>globalThis.__REPOSITORY_SHA__="dfe6dc69fc65ea1de558717c0bd7c97115005b15";globalThis.__REPOSITORY_BUILD__="dfe6dc69";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
     resident:[
-      {id:"refresh",text:"🔄",label:"Refresh",onClick:freshArrival},
-      {id:"workshop",text:"🛠",label:"Workshop",onClick:toggleWorkshop}
+      {id:"refresh",text:"🔄",label:"Refresh",onClick:freshArrival}
     ]
   };
   const build=globalThis.__REPOSITORY_BUILD__||"local";
@@ -213,18 +212,6 @@ select{width:100%;padding:0 12px;appearance:auto}
     location.replace(url);
   }
 
-  function toggleWorkshop(button){
-    const world=globalThis.vestibule;
-    if(!world?.toggleContentWorkshopHidden)return;
-    const hidden=world.toggleContentWorkshopHidden();
-    button?.classList.toggle("active",hidden);
-    button?.setAttribute("aria-pressed",hidden?"true":"false");
-    const lift=registered.get("lift");
-    if(lift){lift.classList.remove("active");lift.setAttribute("aria-pressed","false");lift.textContent="⬆️"}
-    const marble=registered.get("marble");
-    marble?.classList.remove("active");marble?.setAttribute("aria-pressed","false");
-  }
-
   function liftBetwixtContent(button){
     const world=globalThis.vestibule;
     if(!world?.toggleContentRaised||world.contentWorkshopHidden)return;
@@ -273,17 +260,6 @@ select{width:100%;padding:0 12px;appearance:auto}
   for(const spell of spells.temporary)registerTool({...spell,lane:"temporary"});
   for(const spell of spells.resident)registerTool({...spell,lane:"resident"});
 
-  // Betwixt now begins at the bench. Workshop is the sole manifested spell.
-  // Wait for the donor to expose its world boundary, then enter exactly once.
-  function enterWorkshopOnReady(){
-    const world=globalThis.vestibule;
-    if(!world?.setContentWorkshopHidden)return false;
-    if(!world.contentWorkshopHidden)world.setContentWorkshopHidden(true);
-    const button=registered.get("workshop");
-    button?.classList.add("active");button?.setAttribute("aria-pressed","true");
-    return true;
-  }
-  if(!enterWorkshopOnReady())addEventListener("vestibule-ready",enterWorkshopOnReady,{once:true});
 
   globalThis.RepositoryShell={
     place,
@@ -1561,42 +1537,9 @@ function toggleContentTinkered(){return setContentTinkered(!contentTinkered)}
 
 // 🛠 enters Workshop. The old lab-world organism now lives here as one intact
 // Workshop-resident container rather than disappearing when the bench is cleared.
-let contentWorkshopHidden=false;
-function setContentWorkshopHidden(hidden){
-  hidden=!!hidden;
-  if(hidden===contentWorkshopHidden)return contentWorkshopHidden;
-  contentWorkshopHidden=hidden;
-  if(hidden){
-    // Restore ordinary geometry before seating the intact legacy organism.
-    contentRaised=false;contentLiftMotion=null;
-    contentTinkered=false;contentTinkerMotion=null;contentGravityVelocity=0;
-    betwixtContent.position.set(0,0,0);betwixtContent.scale.setScalar(1);
-    workshopField.visible=true;
-    workshopCrucibleBetwixtable.visible=true;
-    if(legacyLabCarrier){legacyLabCarrier.visible=true;seatLegacyLabsAboveJovian();}
-    // Workshop context does not own Crucible state. The resident ⚗️ container
-    // alone decides whether its parented organism is present here.
-    if(workshopCrucibleEnabled)workshopCrucible.visible=true;
-    resetWorkshopGlass();
-    // Workshop opens on the central thoughtform table: this is the working anchor, not the surrounding clutter.
-    target.copy(workshopTabletopBetwixtable.position);radius=7.2;theta=.16;phi=1.02;applyCamera();
-    setLabActions(null);
-  }else{
-    if(focusedWorkshopObject){
-      focusedWorkshopObject.position.copy(workshopObserverReturn?.position||focusedWorkshopObject.position);
-      focusedWorkshopObject=null;workshopFocusMotion=null;workshopObserverReturn=null;
-    }
-    if(legacyLabCarrier)legacyLabCarrier.visible=false;
-    workshopField.visible=false;
-    workshopCrucibleBetwixtable.visible=false;
-    workshopCrucible.visible=false;
-    home();
-  }
-  window.vestibuleDirty=true;
-  return contentWorkshopHidden;
-}
-
-function toggleContentWorkshopHidden(){return setContentWorkshopHidden(!contentWorkshopHidden)}
+const contentWorkshopHidden=true;
+function setContentWorkshopHidden(){return true}
+function toggleContentWorkshopHidden(){return true}
 
 // Workshop gravity is the same tiny vertical integrator already earned by the
 // compacted Betwixt organism. Objects opt in; merely entering Workshop does not
@@ -1610,7 +1553,7 @@ const WorkshopGravity={
   remove(object){workshopGravityBodies.delete(object);return object},
   clear(){workshopGravityBodies.clear()},
   update(dt){
-    if(!contentWorkshopHidden)return;
+    
     for(const [object,body] of workshopGravityBodies){
       if(!object.parent){workshopGravityBodies.delete(object);continue}
       body.velocity=stepBetwixtGravity(object,body.velocity,dt,body.floorY,body.gravity);
@@ -2004,6 +1947,10 @@ function seatLegacyLabsAboveJovian(gap=.72){
   return Object.freeze({bottom:jovian.max.y+gap,jovianTop:jovian.max.y,gap});
 }
 
+// Workshop is no longer a mode or spell. This is simply Betwixt's ordinary world.
+legacyLabCarrier.visible=true;
+seatLegacyLabsAboveJovian();
+
 
 
 const workshopCrucibleOrb=new THREE.Group();
@@ -2088,7 +2035,7 @@ for(let i=0;i<3;i++){
 // Share Jupurn's world-space XZ. The orb remains on the Workshop floor.
 const workshopJupurnXZ=C.Transform.get(jupurnEntity).position;
 workshopCrucibleBetwixtable.position.set(workshopJupurnXZ.x,GROUND_Y+.70,workshopJupurnXZ.z);
-workshopCrucibleBetwixtable.visible=false;
+workshopCrucibleBetwixtable.visible=true;
 function tapWorkshopCrucibleOrb(){
   // First touch uses Betwixt's existing foreground grammar. Once present,
   // the same physical object casts its Crucible spell.
@@ -2169,7 +2116,7 @@ microscope.position.set(.48,.10,0);microscope.rotation.y=-.28;
 // This is deliberately local evidence, not a generalized fabrication protocol.
 const workshopField=new THREE.Group();
 workshopField.name='workshop:49-radically-different-artillery';
-workshopField.visible=false;
+workshopField.visible=true;
 scene.add(workshopField);
 
 const workshopMetal=new THREE.MeshStandardMaterial({color:0x5f625d,roughness:.72,metalness:.28});
@@ -4088,7 +4035,6 @@ function updateWorkshop(now){
   window.vestibuleDirty=true;
 }
 function workshopTap(x,y){
-  if(!contentWorkshopHidden)return false;
   if(rocketChase.active&&!rocketChase.returning){
     const r=canvas.getBoundingClientRect();
     pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
@@ -4738,9 +4684,6 @@ function beginEntry(id){
 }
 const SelectionSystem={
   pick(x,y){
-    // Hidden Betwixt content remains alive for cheap restoration, but absence
-    // from the Workshop context also means absence from selection.
-    if(contentWorkshopHidden)return null;
     const r=canvas.getBoundingClientRect();
     pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
     raycaster.setFromCamera(pointerNDC,camera);
@@ -4851,20 +4794,13 @@ renderer.setAnimationLoop((now)=>{
   updateWorkshopCrucibleOrb(now);
   updateWorldD20(now);
 
-  if(contentWorkshopHidden){
-    updateWorkshop(now);
-    // The legacy lab organism is now Workshop content, so its clocks continue
-    // while it hangs above the Jovian experiment instead of freezing offstage.
-    JupurnSystem(now);ExchangeSystem(now);OrbitalSystem(now);FoundrySystem(now);DescentSystem(now);SpoilSystem(now);
-    if(workshopCrucibleEnabled){
-      const workshopDt=Math.min(.05,Math.max(.001,(now-workshopBearingLast)/1000));
-      if(workshopWater||workshopLava){workshopWater?.update(now);workshopLava?.update(now);updateWorkshopSteam(now,workshopDt)}
-      workshopMeteors?.update(now);workshopMeteors?.syncRender?.();
-      if(workshopBearings){const bearingDt=Math.min(.15,Math.max(.001,(now-workshopBearingLast)/1000));workshopBearingLast=now;workshopBearings.update(bearingDt);updateWorkshopLavaPops(now)}else workshopBearingLast=now;
-    }else workshopBearingLast=now;
-    renderer.render(scene,camera);window.vestibuleDirty=false;
-    return;
-  }
+  updateWorkshop(now);
+  if(workshopCrucibleEnabled){
+    const workshopDt=Math.min(.05,Math.max(.001,(now-workshopBearingLast)/1000));
+    if(workshopWater||workshopLava){workshopWater?.update(now);workshopLava?.update(now);updateWorkshopSteam(now,workshopDt)}
+    workshopMeteors?.update(now);workshopMeteors?.syncRender?.();
+    if(workshopBearings){const bearingDt=Math.min(.15,Math.max(.001,(now-workshopBearingLast)/1000));workshopBearingLast=now;workshopBearings.update(bearingDt);updateWorkshopLavaPops(now)}else workshopBearingLast=now;
+  }else workshopBearingLast=now;
   if(contentLiftMotion){
     const m=contentLiftMotion,raw=Math.min(1,(now-m.started)/m.duration),t=easeQuiet(raw);
     betwixtContent.position.y=THREE.MathUtils.lerp(m.from,m.to,t);
@@ -4893,10 +4829,6 @@ renderer.setAnimationLoop((now)=>{
   window.__contentGravityLast=now;
   WorkshopGravity.update(Math.min(0.05,Math.max(0,(now-(window.__workshopGravityLast||now))/1000)));
   window.__workshopGravityLast=now;
-  if(contentWorkshopHidden&&workshopBearings){
-    const bearingDt=Math.min(.15,Math.max(.001,(now-workshopBearingLast)/1000));
-    workshopBearingLast=now;workshopBearings.update(bearingDt);
-  }else workshopBearingLast=now;
   updateFluidGlobes(now);
   JupurnSystem(now);
   ExchangeSystem(now);
