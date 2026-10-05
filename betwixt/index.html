@@ -2622,6 +2622,126 @@ function workshopArc(g,r=.5,m=workshopWood){
   const q=new THREE.Mesh(new THREE.TorusGeometry(r,.045,6,18,Math.PI),m);q.rotation.x=Math.PI/2;q.castShadow=true;g.add(q);return q;
 }
 
+
+// WORKSHOP DRAWBRIDGE — first ordinary consumer of semantic attachment authoring.
+// This is a machine, not a snapping demonstration. Named relationships place the
+// fixed structure; the hinge remains an executable relationship after placement.
+const workshopDrawbridge=buildBetwixtable({
+  name:'workshop-drawbridge',
+  parent:legacyWorkshop,
+  at:new THREE.Vector3(-2.2,GROUND_Y,-1.15),
+  padding:.30,
+  build(presentation,spatial){
+    const stone=workshopPale,wood=workshopWood,metal=workshopDark,accent=workshopWarm;
+    const things=new Map(),relations=[];
+    function add(id,kind,mesh,frame){
+      const root=new THREE.Group();root.name='drawbridge:'+id;root.add(mesh);presentation.add(root);
+      things.set(id,{id,kind,root,frame});return root;
+    }
+    // Threshold is the one seated datum. Everything structural is authored from it.
+    const threshold=add('threshold','masonry-threshold',
+      new THREE.Mesh(new THREE.BoxGeometry(1.42,.18,.34),stone),
+      (p)=>p==='left'?{p:[-.54,.09,0],out:[0,1,0],up:[0,0,1]}:
+           p==='right'?{p:[.54,.09,0],out:[0,1,0],up:[0,0,1]}:
+           p==='hinge'?{p:[0,.18,-.10],out:[0,0,-1],up:[0,1,0]}:null);
+    const pierGeom=new THREE.BoxGeometry(.25,1.12,.30);
+    add('left-pier','pier',new THREE.Mesh(pierGeom,stone),
+      p=>p==='bottom'?{p:[0,-.56,0],out:[0,-1,0],up:[0,0,1]}:
+         p==='cap'?{p:[0,.56,0],out:[0,1,0],up:[0,0,1]}:null);
+    add('right-pier','pier',new THREE.Mesh(pierGeom,stone),
+      p=>p==='bottom'?{p:[0,-.56,0],out:[0,-1,0],up:[0,0,1]}:
+         p==='cap'?{p:[0,.56,0],out:[0,1,0],up:[0,0,1]}:null);
+    function worldFrame(t,port){
+      const f=t.frame(port);if(!f)throw Error('drawbridge attachment frame missing: '+t.id+'.'+port);
+      const p=new THREE.Vector3(...f.p);t.root.localToWorld(p);
+      const q=t.root.getWorldQuaternion(new THREE.Quaternion());
+      return {p,out:new THREE.Vector3(...f.out).applyQuaternion(q).normalize(),up:new THREE.Vector3(...f.up).applyQuaternion(q).normalize()};
+    }
+    function attach(childId,childPort,parentId,parentPort){
+      const child=things.get(childId),parent=things.get(parentId);
+      presentation.updateMatrixWorld(true);
+      const cf=worldFrame(child,childPort),pf=worldFrame(parent,parentPort);
+      child.root.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors(cf.out,pf.out.clone().negate()));
+      presentation.updateMatrixWorld(true);
+      child.root.position.add(pf.p.clone().sub(worldFrame(child,childPort).p));
+      relations.push(Object.freeze({child:childId,childPort,parent:parentId,parentPort}));
+    }
+    attach('left-pier','bottom','threshold','left');
+    attach('right-pier','bottom','threshold','right');
+
+    // Cross-shaft is derived from the two pier caps rather than authored coordinates.
+    presentation.updateMatrixWorld(true);
+    const leftCap=worldFrame(things.get('left-pier'),'cap').p;
+    const rightCap=worldFrame(things.get('right-pier'),'cap').p;
+    const shaft=workshopCyl(presentation,leftCap,rightCap,.055,metal,12);shaft.name='drawbridge:overhead-shaft';
+
+    // The moving leaf is parented to the semantic hinge frame. Its local geometry
+    // extends away from the threshold, so rotation is literally rotation about hinge.
+    const hingeWorld=worldFrame(things.get('threshold'),'hinge').p;
+    const hinge=presentation.worldToLocal(hingeWorld.clone());
+    const leafPivot=new THREE.Group();leafPivot.name='drawbridge:hinge';leafPivot.position.copy(hinge);presentation.add(leafPivot);
+    const leaf=new THREE.Mesh(new THREE.BoxGeometry(1.08,.11,1.38),wood);
+    leaf.position.set(0,0,-.69);leaf.castShadow=true;leaf.receiveShadow=true;leafPivot.add(leaf);
+    for(const x of [-.43,.43]){
+      const rail=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,1.30),accent);
+      rail.position.set(x,.095,-.69);rail.castShadow=true;leafPivot.add(rail);
+    }
+    const hingeBar=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,1.18,12),metal);
+    hingeBar.rotation.z=Math.PI/2;hingeBar.castShadow=true;leafPivot.add(hingeBar);
+
+    // A visible hand crank on the right pier. Tap anywhere on the focused
+    // Betwixtable to operate it; no additional UI is introduced.
+    const crank=new THREE.Group();crank.name='drawbridge:crank';presentation.add(crank);
+    const rightCapLocal=presentation.worldToLocal(rightCap.clone());
+    crank.position.copy(rightCapLocal).add(new THREE.Vector3(.22,-.22,.02));
+    const wheel=new THREE.Mesh(new THREE.TorusGeometry(.14,.025,7,18),metal);wheel.rotation.y=Math.PI/2;crank.add(wheel);
+    const handle=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.16,8),accent);handle.rotation.z=Math.PI/2;handle.position.set(.10,.10,.08);crank.add(handle);
+
+    // Chains are consequence: every frame their endpoints are recomputed from the
+    // moving deck and fixed overhead shaft. They are not authored curves.
+    const chainMat=workshopDark;
+    const chains=[];
+    function chainBetween(a,b){
+      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,1,7),chainMat);mesh.castShadow=true;presentation.add(mesh);chains.push({mesh,a,b});return mesh;
+    }
+    const chainDefs=[-.43,.43].map(x=>({
+      top:()=>new THREE.Vector3(x,leftCap.y-.02,leftCap.z),
+      deck:()=>leafPivot.localToWorld(new THREE.Vector3(x,.10,-1.23))
+    }));
+    chainDefs.forEach(d=>chainBetween(d.top,d.deck));
+    function updateChains(){
+      presentation.updateMatrixWorld(true);
+      chains.forEach((c,i)=>{
+        const a=presentation.worldToLocal(chainDefs[i].top().clone()),b=presentation.worldToLocal(chainDefs[i].deck().clone());
+        const d=b.clone().sub(a),mid=a.clone().add(b).multiplyScalar(.5);
+        c.mesh.position.copy(mid);c.mesh.scale.set(1,d.length(),1);
+        c.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
+      });
+    }
+
+    let raised=false,target=0,current=0;
+    presentation.userData.semanticConstruction=Object.freeze({
+      generation:'workshop-consumer-1',
+      things:Object.freeze(['threshold','left-pier','right-pier','hinge','leaf','overhead-shaft','crank','chains']),
+      relations:Object.freeze([...relations,
+        Object.freeze({child:'leaf',childPort:'hinge',parent:'threshold',parentPort:'hinge',kind:'revolute'}),
+        Object.freeze({child:'chains',parent:'leaf+overhead-shaft',kind:'derived-endpoints'})
+      ])
+    });
+    presentation.userData.animate=()=>{
+      current+=(target-current)*.12;
+      leafPivot.rotation.x=current;
+      crank.rotation.x=-current*2.8;
+      updateChains();
+      if(Math.abs(target-current)>.001)window.vestibuleDirty=true;
+    };
+    spatial.interact=()=>{raised=!raised;target=raised?-Math.PI*.42:0;window.vestibuleDirty=true};
+    for(const o of [threshold,...things.values()].flatMap(x=>x?.root?[x.root]:[]))o?.traverse?.(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
+    updateChains();
+    queueMicrotask(()=>{spatial.seat();spatial.fit();window.vestibuleDirty=true});
+  }
+});
+
 const artilleryNames=[
 'Bombard','Ship Cannon','Field Gun','Mountain Gun','Siege Mortar','Howitzer','Carronade',
 'Rocket Cart','Hwacha','Organ Gun','Volley Gun','Revolving Cannon','Twin Gun','Pepperbox Battery',
@@ -5253,6 +5373,7 @@ renderer.setAnimationLoop((now)=>{
     cage.rotation.z=Math.sin(now*.000053+phase*1.7)*.055;
     window.vestibuleDirty=true;
   });
+  workshopDrawbridge?.userData?.betwixtable?.presentation?.userData?.animate?.();
   const semanticThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:semantic-snapping-primitives');
   semanticThoughtform?.userData.animate?.(now);
   const nepThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:neptunian-caretaker-carrier');
