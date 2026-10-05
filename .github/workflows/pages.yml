@@ -13,8 +13,7 @@ permissions:
 concurrency:
   group: pages
   # Publication is ordered. A newer source commit may wait, but it must not cancel
-  # a deployment already crossing the public membrane and leave Pages serving an
-  # arbitrarily old completed revision during rapid iteration.
+  # a deployment already crossing the public membrane.
   cancel-in-progress: false
 
 jobs:
@@ -25,6 +24,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Stamp deployed Betwixt provenance
+        run: |
+          set -euo pipefail
+          expected="${GITHUB_SHA}"
+          build="${expected:0:8}"
+          printf '%s\n' "${expected}" > betwixt/.repository-sha
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          path = Path("betwixt/index.html")
+          text = path.read_text()
+          sha = os.environ["GITHUB_SHA"]
+          build = sha[:8]
+          text, n1 = re.subn(r'data-repository-build="[^"]+"', f'data-repository-build="{build}"', text, count=1)
+          text, n2 = re.subn(r'data-repository-sha="[^"]+"', f'data-repository-sha="{sha}"', text, count=1)
+          text, n3 = re.subn(r'globalThis\.__REPOSITORY_SHA__="[^"]+"', f'globalThis.__REPOSITORY_SHA__="{sha}"', text, count=1)
+          text, n4 = re.subn(r'globalThis\.__REPOSITORY_BUILD__="[^"]+"', f'globalThis.__REPOSITORY_BUILD__="{build}"', text, count=1)
+          if (n1,n2,n3,n4) != (1,1,1,1):
+              raise SystemExit(f"provenance stamp failed: {(n1,n2,n3,n4)}")
+          path.write_text(text)
+          PY
+          grep -Fq "data-repository-sha=\"${expected}\"" betwixt/index.html
+          grep -Fq "data-repository-build=\"${build}\"" betwixt/index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -32,13 +56,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
       - name: Verify deployed Betwixt provenance
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
-          expected="$(tr -d '\r\n' < betwixt/.repository-sha)"
-          test "${#expected}" = 40
+          expected="${GITHUB_SHA}"
           build="${expected:0:8}"
           url="${PAGE_URL%/}/betwixt/?verify=${expected}"
           for attempt in {1..12}; do
