@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="f2eb0fc2" data-repository-sha="f2eb0fc27a4a0a86d4ea035bd3c4849d8533d083"><script>globalThis.__REPOSITORY_SHA__="f2eb0fc27a4a0a86d4ea035bd3c4849d8533d083";globalThis.__REPOSITORY_BUILD__="f2eb0fc2";</script><script>(()=>{
+<body data-repository-build="e9b91cb4" data-repository-sha="e9b91cb4990cca6f667b176d2298e722445a4ceb"><script>globalThis.__REPOSITORY_SHA__="e9b91cb4990cca6f667b176d2298e722445a4ceb";globalThis.__REPOSITORY_BUILD__="e9b91cb4";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1580,7 +1580,8 @@ function setContentWorkshopHidden(hidden){
     // alone decides whether its parented organism is present here.
     if(workshopCrucibleEnabled)workshopCrucible.visible=true;
     resetWorkshopGlass();
-    target.set(0,.35,0);radius=11.8;theta=.16;phi=1.02;applyCamera();
+    // Workshop opens on the central thoughtform table: this is the working anchor, not the surrounding clutter.
+    target.copy(workshopTabletopBetwixtable.position);radius=7.2;theta=.16;phi=1.02;applyCamera();
     setLabActions(null);
   }else{
     if(focusedWorkshopObject){
