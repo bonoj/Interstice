@@ -3326,10 +3326,10 @@ const functionD20=buildBetwixtable({
   name:'function-d20',parent:legacyWorkshop,at:new THREE.Vector3(3.25,GROUND_Y,2.15),padding:.42,
   build(root,spatial){
     const baseGeo=new THREE.IcosahedronGeometry(1.34,0).toNonIndexed();
-    const baseMat=new THREE.MeshStandardMaterial({color:0xd7d0c0,roughness:.62,metalness:.12,flatShading:true});
-    const base=new THREE.Mesh(baseGeo,baseMat);base.name='function-d20:control';base.castShadow=true;base.receiveShadow=true;root.add(base);
+    // The twenty sampled patches ARE the die. There is no second control skin underneath:
+    // t=0 is exactly planar, so idle faces cannot z-fight with duplicate geometry.
     const pos=baseGeo.attributes.position;
-    const patchMat=new THREE.MeshStandardMaterial({color:0xb9ad91,roughness:.72,metalness:.08,side:THREE.DoubleSide,flatShading:false});
+    const patchMat=new THREE.MeshStandardMaterial({color:0xd7d0c0,roughness:.62,metalness:.12,side:THREE.DoubleSide,flatShading:false});
     for(let face=0;face<20;face++){
       const A=new THREE.Vector3().fromBufferAttribute(pos,face*3),B=new THREE.Vector3().fromBufferAttribute(pos,face*3+1),C=new THREE.Vector3().fromBufferAttribute(pos,face*3+2);
       const normal=new THREE.Vector3().crossVectors(B.clone().sub(A),C.clone().sub(A)).normalize();
@@ -3343,9 +3343,14 @@ const functionD20=buildBetwixtable({
 function functionD20Project(face,t){
   const mesh=face.mesh,p=mesh.geometry.attributes.position,base=mesh.userData.base,uv=mesh.userData.uv,n=mesh.userData.normal;
   for(let k=0;k<p.count;k++){
-    const u=uv[k*2],v=uv[k*2+1],x=(u-.333)*1.8,y=(v-.333)*1.8;
-    const h=functionD20Height(face.index,x,y,t);
-    p.setXYZ(k,base[k*3]+n.x*(.006+h),base[k*3+1]+n.y*(.006+h),base[k*3+2]+n.z*(.006+h));
+    const u=uv[k*2],v=uv[k*2+1],w=1-u-v,x=(u-.333)*1.8,y=(v-.333)*1.8;
+    // Dirichlet-ish face boundary: all three triangle edges are invariant at h=0.
+    // Resistance is concentrated in a narrow barycentric edge band; interiors keep the
+    // full function while value and slope settle toward the original planar face.
+    const edge=Math.max(0,Math.min(u,v,w)),band=.115;
+    const q=Math.min(1,edge/band),edgeLock=q*q*(3-2*q);
+    const h=functionD20Height(face.index,x,y,t)*edgeLock;
+    p.setXYZ(k,base[k*3]+n.x*h,base[k*3+1]+n.y*h,base[k*3+2]+n.z*h);
   }
   p.needsUpdate=true;mesh.geometry.computeVertexNormals();
 }
