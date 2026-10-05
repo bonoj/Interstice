@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="6773fa45" data-repository-sha="6773fa454f75c2ab94e3796023097bbdcfc70ece"><script>globalThis.__REPOSITORY_SHA__="6773fa454f75c2ab94e3796023097bbdcfc70ece";globalThis.__REPOSITORY_BUILD__="6773fa45";</script><script>(()=>{
+<body data-repository-build="3c0776a3" data-repository-sha="3c0776a3a3f117e5136912ac2e51d54dc209d8a1"><script>globalThis.__REPOSITORY_SHA__="3c0776a3a3f117e5136912ac2e51d54dc209d8a1";globalThis.__REPOSITORY_BUILD__="3c0776a3";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1769,8 +1769,10 @@ function toggleWorkshopCrucible(button){return workshopCrucibleEnabled?enterBetw
 // The specimens are ordinary Workshop inhabitants: no targeting, behavior, or semantics yet.
 const miniatureWhiteMat=new THREE.MeshStandardMaterial({color:0xeeeDE8,roughness:.82,metalness:0});
 const miniatureDarkMat=new THREE.MeshStandardMaterial({color:0x596066,roughness:.62,metalness:.12});
-const miniatureCyanMat=workshopCrucibleBearingMats[2];
-const miniatureOrangeMat=workshopCrucibleBearingMats[1];
+// Miniatures are constructed before the Crucible bearing palette exists; use the same
+// established material values without creating an initialization-order dependency.
+const miniatureCyanMat=new THREE.MeshStandardMaterial({color:0x62aeb4,roughness:.26,metalness:.46});
+const miniatureOrangeMat=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.30,metalness:.50});
 const miniatureMats={white:miniatureWhiteMat,dark:miniatureDarkMat,cyan:miniatureCyanMat,orange:miniatureOrangeMat,brass:workshopCrucibleStandMat};
 
 function miniaturePart(parent,{kind='block',size=[.2,.2,.2],at=[0,0,0],rot=[0,0,0],mat='white'}={}){
