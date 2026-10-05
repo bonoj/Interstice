@@ -3261,7 +3261,7 @@ function updateRocketChase(now){
 function updateWorldD20(now){if(worldD20Animators.length){for(const animate of worldD20Animators)animate(now);}updateRocketChase(now);window.vestibuleDirty=true;}
 
 
-/* Function d20 — Workshop function laboratory.
+/* Functional Biomes — Workshop bounded-function laboratory.
    The icosahedron is control geometry. Each face owns one deterministic function and
    one private five-second clock. Consequence geometry is sampled from that function;
    nothing above the control face is hand-authored. */
@@ -3323,7 +3323,7 @@ function buildFunctionD20Patch(A,B,C,normal,index,material){
   return mesh;
 }
 const functionD20=buildBetwixtable({
-  name:'function-d20',parent:legacyWorkshop,at:new THREE.Vector3(3.25,GROUND_Y,2.15),padding:.42,
+  name:'functional-biomes',parent:legacyWorkshop,at:new THREE.Vector3(3.25,GROUND_Y,2.15),padding:.42,
   build(root,spatial){
     const baseGeo=new THREE.IcosahedronGeometry(1.34,0).toNonIndexed();
     // The twenty sampled patches ARE the die. There is no second control skin underneath:
@@ -3378,6 +3378,86 @@ globalThis.FunctionD20={
   inspect:()=>functionD20Faces.map(f=>({face:f.index+1,name:f.name,t:+f.t.toFixed(4),active:f.started!=null&&!f.done,done:f.done})),
   reset:()=>{for(const f of functionD20Faces){f.t=0;f.started=null;f.done=false;functionD20Project(f,0)}functionD20Active.clear();functionD20.userData.betwixtable.fit();window.vestibuleDirty=true;}
 };
+
+
+/* Functional Structures — authored cross-sections imply continuous volume.
+   No box/cylinder primitives: every visible structure below is sampled from stations. */
+function buildSectionLoft(stations,{sides=18,material,cap=true,name='section-loft'}={}){
+  const verts=[],indices=[];
+  const ring=(st,j)=>{
+    const a=(j/sides)*Math.PI*2+st.twist;
+    // superellipse-like authored section: round, square, pinched and asymmetric forms
+    const c=Math.cos(a),q=Math.sin(a),p=st.power||2;
+    const sx=Math.sign(c)*Math.pow(Math.abs(c),2/p);
+    const sz=Math.sign(q)*Math.pow(Math.abs(q),2/p);
+    return [st.x+sx*st.rx*(1+(st.lobe||0)*Math.cos(3*a)),st.y,st.z+sz*st.rz*(1-(st.lobe||0)*.45*Math.cos(3*a))];
+  };
+  for(const st of stations)for(let j=0;j<sides;j++)verts.push(...ring(st,j));
+  for(let i=0;i<stations.length-1;i++)for(let j=0;j<sides;j++){
+    const a=i*sides+j,b=i*sides+(j+1)%sides,c=(i+1)*sides+(j+1)%sides,d=(i+1)*sides+j;
+    indices.push(a,b,d,b,c,d);
+  }
+  if(cap){
+    const bottom=verts.length/3;verts.push(stations[0].x,stations[0].y,stations[0].z);
+    const top=verts.length/3;const last=stations[stations.length-1];verts.push(last.x,last.y,last.z);
+    for(let j=0;j<sides;j++){indices.push(bottom,(j+1)%sides,j);const a=(stations.length-1)*sides+j,b=(stations.length-1)*sides+(j+1)%sides;indices.push(top,a,b);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setIndex(indices);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,material);m.name=name;m.castShadow=true;m.receiveShadow=true;return m;
+}
+function interpolateStations(authored,steps=7){
+  const out=[];
+  for(let i=0;i<authored.length-1;i++)for(let k=0;k<steps;k++){
+    const t=k/steps,a=authored[i],b=authored[i+1],e=t*t*(3-2*t),o={};
+    for(const key of ['x','y','z','rx','rz','twist','power','lobe'])o[key]=THREE.MathUtils.lerp(a[key]??0,b[key]??0,e);
+    out.push(o);
+  }
+  out.push({...authored[authored.length-1]});return out;
+}
+const functionalStructures=buildBetwixtable({
+  name:'functional-structures',parent:legacyWorkshop,at:new THREE.Vector3(-3.15,GROUND_Y,2.25),padding:.55,
+  build(root,spatial){
+    const stone=new THREE.MeshStandardMaterial({color:0xc8b994,roughness:.86,metalness:.03,flatShading:false});
+    const brass=new THREE.MeshStandardMaterial({color:0x9b7945,roughness:.48,metalness:.52,flatShading:false});
+    const dark=new THREE.MeshStandardMaterial({color:0x55575a,roughness:.58,metalness:.36,flatShading:false});
+
+    // 1: civic tower. Five authored sections; everything between them is interpolation.
+    const towerStations=interpolateStations([
+      {x:-1.45,y:.00,z:.25,rx:.62,rz:.62,twist:0,power:5,lobe:.02},
+      {x:-1.45,y:.55,z:.25,rx:.50,rz:.50,twist:.05,power:5,lobe:.03},
+      {x:-1.45,y:1.15,z:.25,rx:.56,rz:.56,twist:.13,power:3.4,lobe:.08},
+      {x:-1.45,y:1.78,z:.25,rx:.31,rz:.31,twist:.28,power:2.4,lobe:.12},
+      {x:-1.45,y:2.38,z:.25,rx:.055,rz:.055,twist:.42,power:2,lobe:0}
+    ],8);
+    root.add(buildSectionLoft(towerStations,{sides:20,material:stone,name:'functional-structures:tower'}));
+
+    // 2: lighthugger-ish hull. Cross sections run horizontally; rotate loft axis into X.
+    const hullStations=interpolateStations([
+      {x:0,y:-1.48,z:0,rx:.05,rz:.05,twist:0,power:2,lobe:0},
+      {x:0,y:-1.05,z:0,rx:.28,rz:.43,twist:0,power:2.5,lobe:.06},
+      {x:0,y:-.35,z:0,rx:.48,rz:.62,twist:.08,power:4.5,lobe:.10},
+      {x:0,y:.42,z:0,rx:.42,rz:.55,twist:-.05,power:5.5,lobe:.04},
+      {x:0,y:1.15,z:0,rx:.24,rz:.34,twist:.04,power:3,lobe:.03},
+      {x:0,y:1.52,z:0,rx:.035,rz:.035,twist:0,power:2,lobe:0}
+    ],8);
+    const hull=buildSectionLoft(hullStations,{sides:20,material:dark,name:'functional-structures:hull'});
+    hull.rotation.z=Math.PI/2;hull.position.set(.45,1.08,.28);root.add(hull);
+
+    // 3: inhabited spire: authored sections intentionally change topology-read without primitives.
+    const spireStations=interpolateStations([
+      {x:1.35,y:0,z:-.75,rx:.55,rz:.42,twist:0,power:7,lobe:.03},
+      {x:1.35,y:.42,z:-.75,rx:.43,rz:.34,twist:.18,power:7,lobe:.05},
+      {x:1.35,y:.78,z:-.75,rx:.64,rz:.46,twist:.34,power:4,lobe:.12},
+      {x:1.35,y:1.18,z:-.75,rx:.30,rz:.24,twist:.55,power:3,lobe:.18},
+      {x:1.35,y:1.52,z:-.75,rx:.46,rz:.31,twist:.76,power:2.5,lobe:.10},
+      {x:1.35,y:2.08,z:-.75,rx:.04,rz:.04,twist:1.0,power:2,lobe:0}
+    ],7);
+    root.add(buildSectionLoft(spireStations,{sides:18,material:brass,name:'functional-structures:spire'}));
+
+    root.rotation.set(-.08,.32,0);spatial.fit();
+  }
+});
+globalThis.FunctionalStructures={object:functionalStructures};
 
 
 /* Rendezvous cairn laboratory — disposable transport pressure.
