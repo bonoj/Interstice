@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="1b9284a4" data-repository-sha="1b9284a43d9ca39f6755f72dd337e473e0a3ea9a"><script>globalThis.__REPOSITORY_SHA__="1b9284a43d9ca39f6755f72dd337e473e0a3ea9a";globalThis.__REPOSITORY_BUILD__="1b9284a4";</script><script>(()=>{
+<body data-repository-build="f7a2ef7b" data-repository-sha="f7a2ef7b2ae024d81dd3f26ab01d590741c7f857"><script>globalThis.__REPOSITORY_SHA__="f7a2ef7b2ae024d81dd3f26ab01d590741c7f857";globalThis.__REPOSITORY_BUILD__="f7a2ef7b";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -654,6 +654,17 @@ const cruciblePlace=new THREE.Group();
 cruciblePlace.name='place:crucible';
 cruciblePlace.visible=false;
 scene.add(cruciblePlace);
+
+// Places are visibility/interaction boundaries, never pick targets themselves.
+const betwixtPlaces=new Set([observatoryPlace,legacyWorkshop,cruciblePlace]);
+function owningBetwixtPlace(object){
+  for(let o=object;o;o=o.parent)if(betwixtPlaces.has(o))return o;
+  return null;
+}
+function betwixtInteractionActive(object){
+  const place=owningBetwixtPlace(object);
+  return !place||place.visible;
+}
 
 const betwixtContent=new THREE.Group();
 betwixtContent.name='BetwixtContent';
@@ -4088,7 +4099,7 @@ function workshopTap(x,y){
   // Betwixtables form operable resolutions. Shells do not occlude descendant shells:
   // collect every hit first, then let the deepest embedded Betwixtable own the tap.
   const builtBetwixtables=[];
-  scene.traverse(o=>{if(o.userData?.betwixtable?.target&&o.userData.betwixtable.focus)builtBetwixtables.push(o)});
+  scene.traverse(o=>{if(o.userData?.betwixtable?.target&&o.userData.betwixtable.focus&&betwixtInteractionActive(o))builtBetwixtables.push(o)});
   const betwixtDepth=o=>{let d=0,p=o.parent;while(p){if(p.userData?.betwixtable)d++;p=p.parent}return d};
   const hitBetwixtables=scope=>{
     const hits=[];
@@ -4140,7 +4151,7 @@ function workshopTap(x,y){
   if(crucibleOrbHit){
     tapWorkshopCrucibleOrb();window.vestibuleDirty=true;return true;
   }
-  if(workshopCrucibleTool&&workshopTerrain){
+  if(cruciblePlace.visible&&workshopCrucibleTool&&workshopTerrain){
     const hit=raycaster.intersectObject(workshopTerrain.mesh,true)[0];
     if(hit){
       const p=workshopTerrain.owner.worldToLocal(hit.point.clone()),tool=workshopCrucibleTool;
@@ -4152,7 +4163,7 @@ function workshopTap(x,y){
       window.vestibuleDirty=true;return true;
     }
   }
-  const focusables=[...specimens.map(([,o])=>o)];
+  const focusables=legacyWorkshop.visible?[...specimens.map(([,o])=>o)]:[];
   const hits=raycaster.intersectObjects(focusables,true);
   let obj=hits[0]?.object||null;
   while(obj&&obj.parent&&obj.parent!==workshopField&&obj.parent!==scene)obj=obj.parent;
@@ -4729,14 +4740,14 @@ const SelectionSystem={
     raycaster.setFromCamera(pointerNDC,camera);
     const pickables=[];
     for(const id of ecs.query(C.Selectable,C.RenderObject))
-      if(C.Selectable.get(id).enabled)pickables.push(...C.RenderObject.get(id).pickables);
+      if(C.Selectable.get(id).enabled)pickables.push(...C.RenderObject.get(id).pickables.filter(betwixtInteractionActive));
     for(const hit of raycaster.intersectObjects(pickables,false)){
       const id=hit.object.userData.entityId;      if(id&&ecs.has(id,C.Selectable))return id;
     }
     return null;
   },
   tap(x,y){
-    if(fluidGlobeTap(x,y))return;
+    if(legacyWorkshop.visible&&fluidGlobeTap(x,y))return;
     if(workshopTap(x,y))return;
     const hit=this.pick(x,y);
     if(selectedEntity){
