@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="335da385" data-repository-sha="335da38589e63ba4bf0cf81ee4bba0a7d89a7f4c"><script>globalThis.__REPOSITORY_SHA__="335da38589e63ba4bf0cf81ee4bba0a7d89a7f4c";globalThis.__REPOSITORY_BUILD__="335da385";</script><script>(()=>{
+<body data-repository-build="c6a40fd8" data-repository-sha="c6a40fd8029904df3b6277b90b05727de7a105a3"><script>globalThis.__REPOSITORY_SHA__="c6a40fd8029904df3b6277b90b05727de7a105a3";globalThis.__REPOSITORY_BUILD__="c6a40fd8";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -4314,13 +4314,6 @@ function workshopTap(x,y){
     b.userData.betwixtable.focus();
     if(b===relationalInspectionBetwixtable)showMoleculeCard(true);
     window.vestibuleDirty=true;return true;
-  }
-  // Raycast the larger invisible volume explicitly; invisible objects are skipped by normal rendering.
-  workshopCrucibleOrbTapTarget.visible=true;
-  const crucibleOrbHit=raycaster.intersectObject(workshopCrucibleOrbTapTarget,false).length>0;
-  workshopCrucibleOrbTapTarget.visible=false;
-  if(crucibleOrbHit){
-    tapWorkshopCrucibleOrb();window.vestibuleDirty=true;return true;
   }
   if(cruciblePlace.visible&&workshopCrucibleTool&&workshopTerrain){
     const hit=raycaster.intersectObject(workshopTerrain.mesh,true)[0];
