@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="9affe7f0" data-repository-sha="9affe7f016f7232ab54d223977355ffff2519623"><script>globalThis.__REPOSITORY_SHA__="9affe7f016f7232ab54d223977355ffff2519623";globalThis.__REPOSITORY_BUILD__="9affe7f0";</script><script>(()=>{
+<body data-repository-build="9a43cd53" data-repository-sha="9a43cd5398b1b426c9d5e49659c214321452b7bd"><script>globalThis.__REPOSITORY_SHA__="9a43cd5398b1b426c9d5e49659c214321452b7bd";globalThis.__REPOSITORY_BUILD__="9a43cd53";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2863,7 +2863,7 @@ const worldD20Radius=1.28,worldD20Clearance=.65;
 const worldD20Animators=[];
 const worldD20=buildBetwixtable({
   name:'failure-to-launch',parent:scene,
-  at:new THREE.Vector3(workshopTabletopBetwixtable.position.x,thoughtformTableBounds.max.y+worldD20Radius+worldD20Clearance,workshopTabletopBetwixtable.position.z),
+  at:new THREE.Vector3(workshopTabletopBetwixtable.position.x+8.5,thoughtformTableBounds.max.y+worldD20Radius+worldD20Clearance,workshopTabletopBetwixtable.position.z-5.5),
   padding:.55,interact:()=>startRocketChase(),
   build(root,spatial){
     const shellGeo=new THREE.IcosahedronGeometry(worldD20Radius,0);
