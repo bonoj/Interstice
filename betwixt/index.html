@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="694c6b64" data-repository-sha="694c6b640f007aa6c5cca33d20352eab09e9ed9f"><script>globalThis.__REPOSITORY_SHA__="694c6b640f007aa6c5cca33d20352eab09e9ed9f";globalThis.__REPOSITORY_BUILD__="694c6b64";</script><script>(()=>{
+<body data-repository-build="c546e85c" data-repository-sha="c546e85c41d883728a5dc9d5e8aff54ab62158c3"><script>globalThis.__REPOSITORY_SHA__="c546e85c41d883728a5dc9d5e8aff54ab62158c3";globalThis.__REPOSITORY_BUILD__="c546e85c";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1759,6 +1759,10 @@ function setBetwixtTitle(text){if(placeTitleEl)placeTitleEl.textContent=text}
 function removeBetwixtPortal(){
   globalThis.RepositoryShell?.removeTool('betwixt-portal');
 }
+function removePlaceSpells(){
+  const shell=globalThis.RepositoryShell;if(!shell)return;
+  for(const id of ['observatory-place','workshop-place','crucible-container'])shell.removeTool(id);
+}
 function installBetwixtPortal(){
   const shell=globalThis.RepositoryShell;if(!shell||shell.inspect().tools.includes('betwixt-portal'))return;
   shell.registerTool({id:'betwixt-portal',text:'🌀',label:'Return to Betwixt',lane:'resident',onClick:()=>enterBetwixt()});
@@ -1766,7 +1770,7 @@ function installBetwixtPortal(){
 function enterBetwixt(){
   for(const {object} of Object.values(placeDefinitions))object.visible=false;
   if(workshopCrucibleEnabled){workshopCrucibleEnabled=false;removeWorkshopCrucibleSpells()}
-  currentPlace=null;setBetwixtTitle('BETWIXT');removeBetwixtPortal();
+  currentPlace=null;setBetwixtTitle('BETWIXT');removeBetwixtPortal();installPlaceSpells();
   window.vestibuleDirty=true;
 }
 function enterPlace(name){
@@ -1777,7 +1781,7 @@ function enterPlace(name){
   }else if(workshopCrucibleEnabled){
     workshopCrucibleEnabled=false;removeWorkshopCrucibleSpells();
   }
-  next.object.visible=true;currentPlace=name;setBetwixtTitle(next.title);installBetwixtPortal();
+  next.object.visible=true;currentPlace=name;setBetwixtTitle(next.title);removePlaceSpells();installBetwixtPortal();
   window.vestibuleDirty=true;return true;
 }
 function installPlaceSpells(){
