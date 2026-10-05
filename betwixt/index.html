@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="702ed491" data-repository-sha="702ed4919585ba661aa383b268757c6a56b6cff9"><script>globalThis.__REPOSITORY_SHA__="702ed4919585ba661aa383b268757c6a56b6cff9";globalThis.__REPOSITORY_BUILD__="702ed491";</script><script>(()=>{
+<body data-repository-build="5401f2ca" data-repository-sha="5401f2caf2e0695e783535f4e8b30952b0e6f9f3"><script>globalThis.__REPOSITORY_SHA__="5401f2caf2e0695e783535f4e8b30952b0e6f9f3";globalThis.__REPOSITORY_BUILD__="5401f2ca";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2916,7 +2916,7 @@ const worldD20=buildBetwixtable({
     rocket.position.copy((viablePortals[0]||portals[0]).normal).multiplyScalar(-worldD20Radius*.24);
     choosePortal();velocity.copy(targetPortal.center).sub(rocket.position).normalize().multiplyScalar(cruise);
     worldD20Animators.push(now=>{
-      const dt=Math.min(.032,Math.max(.001,(now-last)/1000));last=now,r=rocket.position.length();
+      const dt=Math.min(.032,Math.max(.001,(now-last)/1000));last=now;const r=rocket.position.length();
       if(mode==='TRANSIT'){
         const gate=targetPortal.center,outward=targetPortal.normal;
         const aim=gate.clone().addScaledVector(outward,worldD20Radius*.95);
