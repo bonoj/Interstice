@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="51bf1f0e" data-repository-sha="51bf1f0e359db3c47186737a855445ba2b789223"><script>globalThis.__REPOSITORY_SHA__="51bf1f0e359db3c47186737a855445ba2b789223";globalThis.__REPOSITORY_BUILD__="51bf1f0e";</script><script>(()=>{
+<body data-repository-build="f5dcc3a6" data-repository-sha="f5dcc3a6b931c4494bffcf5782e1afd7662eda28"><script>globalThis.__REPOSITORY_SHA__="f5dcc3a6b931c4494bffcf5782e1afd7662eda28";globalThis.__REPOSITORY_BUILD__="f5dcc3a6";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2881,7 +2881,6 @@ const worldD20=buildBetwixtable({
 
     root.userData.portals=portals;
     root.userData.rocket=rocket;
-    worldD20.userData.rocket=rocket;
     spatial.fit();
   }
 });
@@ -2907,7 +2906,7 @@ function updateRocketChase(now){
     if(raw>=1){radius=saved.radius;theta=saved.theta;phi=saved.phi;rocketChase.active=false;rocketChase.returning=false;rocketChase.saved=null}
     return;
   }
-  const rocket=worldD20.userData.rocket;if(!rocket)return;
+  const rocket=worldD20.userData.betwixtable?.presentation?.userData?.rocket;if(!rocket)return;
   rocket.updateWorldMatrix(true,false);
   const p=rocket.getWorldPosition(new THREE.Vector3()),q=rocket.getWorldQuaternion(new THREE.Quaternion());
   const forward=new THREE.Vector3(0,1,0).applyQuaternion(q).normalize();
@@ -3954,7 +3953,7 @@ function workshopTap(x,y){
     const r=canvas.getBoundingClientRect();
     pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
     raycaster.setFromCamera(pointerNDC,camera);
-    const hit=raycaster.intersectObject(worldD20.userData.rocket,true).length>0;
+    const hit=raycaster.intersectObject(worldD20.userData.betwixtable.presentation.userData.rocket,true).length>0;
     if(!hit){releaseRocketChase();return true}
   }
   const r=canvas.getBoundingClientRect();
