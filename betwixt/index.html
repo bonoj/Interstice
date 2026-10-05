@@ -2002,6 +2002,362 @@ function buildBetwixtable({name='betwixtable',parent=legacyWorkshop,at=null,padd
 
 globalThis.Betwixtable=buildBetwixtable;
 
+const legacyLabCarrier=new THREE.Group();
+legacyLabCarrier.name='legacy-lab-worlds-carrier';
+legacyWorkshop.add(legacyLabCarrier);
+legacyLabCarrier.add(betwixtContent);
+legacyLabCarrier.visible=false;
+function visibleWorldBounds(object){
+  object.updateMatrixWorld(true);
+  const box=new THREE.Box3(),part=new THREE.Box3();
+  object.traverse(o=>{
+    if(!o.visible||(!o.isMesh&&!o.isLine&&!o.isPoints))return;
+    part.setFromObject(o);if(!part.isEmpty())box.union(part);
+  });
+  return box;
+}
+
+// Named spatial anchors. Relations can be declared before either endpoint exists;
+// construction order is no longer allowed to encode world topology.
+const relationalNodes=new Map(),spatialRelations=[];
+function registerRelationalNode(name,{object,bounds=()=>visibleWorldBounds(object)}){
+  relationalNodes.set(name,{name,object,bounds});resolveSpatialRelations();return object;
+}
+function relateSpatial(relation){spatialRelations.push({...relation,resolved:false});resolveSpatialRelations();return relation}
+function resolveSpatialRelations(){
+  for(const relation of spatialRelations){
+    if(relation.resolved)continue;
+    const subject=relationalNodes.get(relation.subject),reference=relationalNodes.get(relation.reference);
+    if(!subject||!reference)continue;
+    if(relation.kind==='above'){
+      subject.object.updateMatrixWorld(true);reference.object.updateMatrixWorld(true);
+      const a=subject.bounds(),b=reference.bounds();if(a.isEmpty()||b.isEmpty())continue;
+      subject.object.position.y+=b.max.y+(relation.gap??0)-a.min.y;
+      subject.object.updateMatrixWorld(true);relation.resolved=true;
+    }
+  }
+}
+registerRelationalNode('betwixt',{object:betwixtPlace,bounds:()=>visibleWorldBounds(betwixtPlace)});
+registerRelationalNode('workshop',{object:legacyWorkshop,bounds:()=>visibleWorldBounds(legacyWorkshop)});
+registerRelationalNode('observatory',{object:observatoryPlace,bounds:()=>visibleWorldBounds(observatoryPlace)});
+registerRelationalNode('crucible',{object:cruciblePlace,bounds:()=>visibleWorldBounds(cruciblePlace)});
+// Jovian is now internal to Workshop; no parent-to-child placement relation is required.
+
+// The legacy organism exists inside its persistent Workshop place.
+legacyLabCarrier.visible=true;
+
+
+const workshopCrucibleOrb=new THREE.Group();
+workshopCrucibleOrb.name='spell-orb:crucible';
+const workshopCrucibleOrbGlass=new THREE.MeshPhysicalMaterial({
+  color:0xb9b7aa,roughness:.12,metalness:.04,transparent:true,opacity:.28,
+  transmission:.72,thickness:.08,ior:1.2,depthWrite:false,side:THREE.DoubleSide
+});
+const workshopCrucibleOrbMesh=new THREE.Mesh(
+  new THREE.IcosahedronGeometry(.50,3),
+  workshopCrucibleOrbGlass
+);
+workshopCrucibleOrbMesh.castShadow=true;
+workshopCrucibleOrbMesh.userData.workshopCrucibleOrb=true;
+workshopCrucibleOrb.add(workshopCrucibleOrbMesh);
+// Invisible forgiving touch volume; visual geometry remains exactly .50.
+const workshopCrucibleBetwixtable=makeBetwixtable(workshopCrucibleOrb,{name:'crucible',interact:()=>tapWorkshopCrucibleOrb()});const workshopCrucibleOrbTapTarget=workshopCrucibleBetwixtable.userData.betwixtable.target;
+betwixtPlace.attach(workshopCrucibleBetwixtable); // ⚗️ Twixt belongs to the persistent Betwixt locus.
+const workshopCrucibleBearingGeo=new THREE.SphereGeometry(.072,10,7);
+const workshopCrucibleBearingMats=[
+  new THREE.MeshStandardMaterial({color:0x252724,roughness:.34,metalness:.58}),
+  new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.30,metalness:.50}),
+  new THREE.MeshStandardMaterial({color:0x62aeb4,roughness:.26,metalness:.46}),
+  new THREE.MeshStandardMaterial({color:0xb9b7aa,roughness:.38,metalness:.36})
+];
+const workshopCrucibleBearingPositions=[
+  [-.23,-.30,-.10],[-.08,-.34,.18],[.11,-.31,-.18],[.25,-.27,.08],
+  [-.28,-.17,.14],[-.13,-.18,-.22],[.03,-.20,.03],[.19,-.15,.22],[.29,-.12,-.09],
+  [-.20,-.04,-.18],[-.07,-.06,.24],[.09,-.02,-.08],[.24,.01,.13],
+  [-.16,.11,.11],[.02,.09,-.23],[.18,.14,-.02],[.07,.23,.15]
+];
+const workshopCrucibleOrbBearings=[];
+workshopCrucibleBearingPositions.forEach((p,i)=>{
+  const bearing=new THREE.Mesh(workshopCrucibleBearingGeo,workshopCrucibleBearingMats[i%workshopCrucibleBearingMats.length]);
+  bearing.position.set(...p);bearing.castShadow=true;workshopCrucibleOrb.add(bearing);workshopCrucibleOrbBearings.push(bearing);
+});
+const workshopCrucibleBearingSeeds=workshopCrucibleOrbBearings.map((_,i)=>({
+  phase:i*2.3999632297,
+  radius:.13+(i%5)*.026,
+  lift:-.03+((i*7)%11)/11*.07,
+  speed:.74+(i%4)*.16
+}));
+function updateWorkshopCrucibleOrb(now){
+  if(!workshopCrucibleBetwixtable.visible)return;
+  const t=now*.001;
+  // Elastic tempo is a bounded phase warp, not an absolute-time multiplier.
+  // Multiplying t by a changing speed makes the phase derivative grow with uptime.
+  const elasticPhase=t*.91+.35*Math.sin(t*.83+Math.sin(t*.19)*1.7);
+  // Two rare attractors emerge from the same noisy cloud: lattice and double helix.
+  const lattice=Math.pow(Math.max(0,Math.sin(t*.27)),9);
+  const helix=Math.pow(Math.max(0,Math.sin(t*.193+2.1)),11)*(1-lattice);
+  for(let i=0;i<workshopCrucibleOrbBearings.length;i++){
+    const bearing=workshopCrucibleOrbBearings[i],s=workshopCrucibleBearingSeeds[i];
+    const a=s.phase+elasticPhase*s.speed;
+    const chaos=new THREE.Vector3(
+      Math.cos(a*1.31+s.phase)*s.radius,
+      s.lift+Math.sin(a*1.73+s.phase*.7)*.145,
+      Math.sin(a*.93+s.phase)*s.radius
+    );
+    const row=Math.floor(i/6),col=i%6;
+    const ordered=new THREE.Vector3((col-2.5)*.078,(row-1)*.095,Math.sin(col*.9+row)*.018);
+    const strand=i&1,hi=Math.floor(i/2),ha=hi*.92+strand*Math.PI+t*.22;
+    const helixPos=new THREE.Vector3(Math.cos(ha)*.18,-.30+hi*.072,Math.sin(ha)*.18);
+    bearing.position.copy(chaos).lerp(ordered,lattice).lerp(helixPos,helix);
+    // Hard geometric truth: bearing centers stay inside the glass by their own radius.
+    const maxCenter=.50-.072-.018;
+    const len=bearing.position.length();if(len>maxCenter)bearing.position.multiplyScalar(maxCenter/len);
+    bearing.rotation.set(a*.7,a*1.1,a*.4);
+  }
+  window.vestibuleDirty=true;
+}
+// Warm brass support ring and three legs share exact endpoints: one continuous stand.
+const workshopCrucibleStandMat=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.34,metalness:.62});
+const workshopCrucibleStandRing=new THREE.Mesh(new THREE.TorusGeometry(.39,.035,8,32),workshopCrucibleStandMat);
+workshopCrucibleStandRing.rotation.x=Math.PI/2;workshopCrucibleStandRing.position.y=-.39;workshopCrucibleStandRing.castShadow=true;workshopCrucibleOrb.add(workshopCrucibleStandRing);
+for(let i=0;i<3;i++){
+  const a=i*Math.PI*2/3;
+  const top=new THREE.Vector3(Math.cos(a)*.39,-.39,Math.sin(a)*.39);
+  const foot=new THREE.Vector3(Math.cos(a)*.49,-.68,Math.sin(a)*.49);
+  const d=foot.clone().sub(top),leg=new THREE.Mesh(new THREE.CylinderGeometry(.027,.034,d.length(),8),workshopCrucibleStandMat);
+  leg.position.copy(top).add(foot).multiplyScalar(.5);leg.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());leg.castShadow=true;workshopCrucibleOrb.add(leg);
+}
+// Share Jupurn's world-space XZ. The orb remains on the Workshop floor.
+const workshopJupurnXZ=C.Transform.get(jupurnEntity).position;
+workshopCrucibleBetwixtable.position.set(workshopJupurnXZ.x,GROUND_Y+.70,workshopJupurnXZ.z);
+workshopCrucibleBetwixtable.visible=true;
+
+// Observer grammar probe: the Crucible sphere is the physical precedent, unchanged.
+// Only its contents differ: an eye with an explicit +Z gaze axis.
+const observerTwixt=buildBetwixtable({
+  name:'observer-eye',
+  parent:betwixtPlace,
+  padding:.18,
+  build:(root)=>{
+    const glass=new THREE.Mesh(new THREE.IcosahedronGeometry(.50,3),workshopCrucibleOrbGlass);
+    glass.castShadow=true;root.add(glass);
+
+    // Ocular seat: the Crucible stand's sphere-scale grammar turned perpendicular to gaze.
+    // The brass carriage encloses the entire .50 glass sphere, not the eyeball.
+    // Eye and carriage share gaze orientation; glass remains stationary.
+    const eye=new THREE.Group();eye.name='observer:eye';root.add(eye);
+    const white=new THREE.Mesh(
+      new THREE.SphereGeometry(.20,22,14),
+      new THREE.MeshStandardMaterial({color:0xe8e5dc,roughness:.48})
+    );
+    eye.add(white);
+    const iris=new THREE.Mesh(
+      new THREE.CircleGeometry(.105,24),
+      new THREE.MeshStandardMaterial({color:0x596d6d,roughness:.42,side:THREE.DoubleSide})
+    );
+    iris.position.z=.188;eye.add(iris);
+    const pupil=new THREE.Mesh(
+      new THREE.CircleGeometry(.052,24),
+      new THREE.MeshStandardMaterial({color:0x151817,roughness:.36,side:THREE.DoubleSide})
+    );
+    pupil.position.z=.191;eye.add(pupil);
+
+    const ocularSeat=new THREE.Group();ocularSeat.name='observer:ocular-seat';root.add(ocularSeat);
+    // Crucible precedent: .39 radius, .035 brass section around the same .50 sphere.
+    const seatRadius=.535,seatAft=-.11;
+    const seatFront=new THREE.Mesh(new THREE.TorusGeometry(seatRadius,.035,8,32),workshopCrucibleStandMat);
+    seatFront.name='observer:ocular-seat:meridian';seatFront.castShadow=true;ocularSeat.add(seatFront);
+    const seatBack=new THREE.Mesh(new THREE.TorusGeometry(seatRadius,.035,8,32),workshopCrucibleStandMat);
+    seatBack.name='observer:ocular-seat:aft';seatBack.position.z=seatAft;seatBack.castShadow=true;ocularSeat.add(seatBack);
+
+    // Same threefold clocking as the tripod, transposed onto the gaze plane:
+    // one binding at 12 o'clock, two at 4 and 8.
+    for(let i=0;i<3;i++){
+      const a=Math.PI/2+i*Math.PI*2/3;
+      const x=Math.cos(a)*seatRadius,y=Math.sin(a)*seatRadius;
+      const front=new THREE.Vector3(x,y,0),back=new THREE.Vector3(x,y,seatAft);
+      const d=back.clone().sub(front);
+      const binding=new THREE.Mesh(new THREE.CylinderGeometry(.027,.034,d.length(),8),workshopCrucibleStandMat);
+      binding.name='observer:ocular-seat:binding';
+      binding.position.copy(front).add(back).multiplyScalar(.5);
+      binding.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
+      binding.castShadow=true;ocularSeat.add(binding);
+    }
+    root.userData.observerOcularSeat=ocularSeat;
+    root.userData.observerEye=eye;
+  }
+});
+const observerEye=observerTwixt.userData.betwixtable.presentation.userData.observerEye;
+const observerEyeWorld=new THREE.Vector3();
+const observerDesiredWorld=new THREE.Vector3();
+const observerDesiredLocal=new THREE.Vector3();
+const observerLocalForward=new THREE.Vector3(0,0,1); // iris/pupil are physically built on +Z
+const observerTargetPoint=new THREE.Vector3();
+const observerOrientFrom=new THREE.Quaternion();
+const observerOrientTo=new THREE.Quaternion();
+const observerParentWorldQuaternion=new THREE.Quaternion();
+let observerAttention='wander';
+let observerAttentionStarted=0;
+let observerAttentionUntil=0;
+let observerAttentionTarget=null;
+let observerNextNotice=performance.now()+4200+Math.random()*5200;
+
+function observerWorldTargetToLocalQuaternion(worldPoint,out){
+  observerEye.getWorldPosition(observerEyeWorld);
+  observerDesiredWorld.copy(worldPoint).sub(observerEyeWorld).normalize();
+  observerEye.parent.getWorldQuaternion(observerParentWorldQuaternion);
+  observerDesiredLocal.copy(observerDesiredWorld).applyQuaternion(observerParentWorldQuaternion.invert()).normalize();
+  out.setFromUnitVectors(observerLocalForward,observerDesiredLocal);
+  return out;
+}
+function observerWanderQuaternion(now,out){
+  // Continuous idle life: predominantly side-to-side, with a smaller independent vertical drift.
+  const t=now*.001;
+  const yaw=.46*Math.sin(t*.34)+.13*Math.sin(t*.127+1.7);
+  const pitch=.105*Math.sin(t*.23+.8)+.035*Math.sin(t*.071+2.4);
+  return out.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+}
+function beginObserverAttention(now,target){
+  observerAttention='orient';
+  observerAttentionStarted=now;
+  observerAttentionTarget=target;
+  observerOrientFrom.copy(observerEye.quaternion);
+  if(target==='camera')observerTargetPoint.copy(camera.position);
+  else workshopCrucibleBetwixtable.userData.betwixtable.bounds().getCenter(observerTargetPoint);
+  observerWorldTargetToLocalQuaternion(observerTargetPoint,observerOrientTo);
+  observerAttentionUntil=now+720+Math.random()*380; // legible orient, never a snap
+}
+function updateObserverEye(now){
+  if(!betwixtPlace.visible||!observerEye)return;
+
+  if(observerAttention==='wander'){
+    observerWanderQuaternion(now,observerOrientTo);
+    observerEye.quaternion.slerp(observerOrientTo,.035);
+    observerTwixt.userData.betwixtable.presentation.userData.observerOcularSeat.quaternion.copy(observerEye.quaternion);
+    if(now>=observerNextNotice){
+      // The room catches attention more often than the human does.
+      beginObserverAttention(now,Math.random()<.24?'camera':'crucible');
+    }
+  }else if(observerAttention==='orient'){
+    // Target was sampled when attention was caught; orient deliberately toward that encounter.
+    const t=THREE.MathUtils.smoothstep(
+      THREE.MathUtils.clamp((now-observerAttentionStarted)/(observerAttentionUntil-observerAttentionStarted),0,1),0,1
+    );
+    observerEye.quaternion.copy(observerOrientFrom).slerp(observerOrientTo,t);
+    observerTwixt.userData.betwixtable.presentation.userData.observerOcularSeat.quaternion.copy(observerEye.quaternion);
+    if(now>=observerAttentionUntil){
+      observerAttention='attend';
+      observerAttentionStarted=now;
+      observerAttentionUntil=now+850+Math.random()*1150;
+    }
+  }else{
+    // While attention is held, a moving target may be pursued; fixation itself retains tiny living drift.
+    if(observerAttentionTarget==='camera')observerTargetPoint.copy(camera.position);
+    else workshopCrucibleBetwixtable.userData.betwixtable.bounds().getCenter(observerTargetPoint);
+    observerWorldTargetToLocalQuaternion(observerTargetPoint,observerOrientTo);
+    const microYaw=.008*Math.sin(now*.0041);
+    const microPitch=.005*Math.sin(now*.0033+1.1);
+    observerOrientTo.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(microPitch,microYaw,0,'YXZ')));
+    observerEye.quaternion.slerp(observerOrientTo,.09);
+    observerTwixt.userData.betwixtable.presentation.userData.observerOcularSeat.quaternion.copy(observerEye.quaternion);
+    if(now>=observerAttentionUntil){
+      observerAttention='wander';
+      observerAttentionTarget=null;
+      observerNextNotice=now+4200+Math.random()*6200;
+    }
+  }
+  window.vestibuleDirty=true;
+}
+registerRelationalNode('observer-eye',{object:observerTwixt,bounds:()=>observerTwixt.userData.betwixtable.bounds()});
+registerRelationalNode('crucible-twixt',{object:workshopCrucibleBetwixtable,bounds:()=>workshopCrucibleBetwixtable.userData.betwixtable.bounds()});
+relateSpatial({subject:'observer-eye',kind:'above',reference:'crucible-twixt',gap:2.0});
+
+function tapObserverTwixt(){
+  if(focusedWorkshopObject!==observerTwixt){
+    if(focusedWorkshopObject)dismissWorkshopFocus();
+    else beginWorkshopFocus(observerTwixt,true);
+    return true;
+  }
+  if(workshopFocusMotion)return true;
+  return enterPlace('observatory');
+}
+observerTwixt.userData.betwixtable.interact=()=>tapObserverTwixt();
+
+function tapWorkshopCrucibleOrb(){
+  // First touch uses Betwixt's existing foreground grammar. Once present,
+  // the same physical object casts its Crucible spell.
+  if(focusedWorkshopObject!==workshopCrucibleBetwixtable){
+    if(focusedWorkshopObject)dismissWorkshopFocus();
+    else beginWorkshopFocus(workshopCrucibleBetwixtable,true);
+    return true;
+  }
+  if(workshopFocusMotion)return true;
+  return enterPlace('crucible');
+}
+
+// Workshop junk bin: retired physical specimens remain as inert clutter, not spells or residents.
+const workshopJunkBin=new THREE.Group();workshopJunkBin.name='workshop:junk-bin';legacyWorkshop.add(workshopJunkBin);
+workshopJunkBin.position.set(-5.1,GROUND_Y,-2.35);
+const junkTrayMat=new THREE.MeshStandardMaterial({color:0x4b4032,roughness:.88,metalness:.18});
+const junkTray=new THREE.Mesh(new THREE.BoxGeometry(2.15,.10,1.18),junkTrayMat);junkTray.position.y=.05;junkTray.receiveShadow=true;workshopJunkBin.add(junkTray);
+for(const [x,z,sx,sz] of [[0,-.57,2.2,.08],[0,.57,2.2,.08],[-1.06,0,.08,1.18],[1.06,0,.08,1.18]]){
+  const lip=new THREE.Mesh(new THREE.BoxGeometry(sx,.24,sz),junkTrayMat);lip.position.set(x,.16,z);lip.castShadow=true;workshopJunkBin.add(lip);
+}
+const dynamite=new THREE.Group();dynamite.name='workshop-junk:dynamite';workshopJunkBin.add(dynamite);
+const dynRed=new THREE.MeshStandardMaterial({color:0x8d2f24,roughness:.82,metalness:.03});
+const dynDark=new THREE.MeshStandardMaterial({color:0x282521,roughness:.9});
+const dynFuse=new THREE.MeshStandardMaterial({color:0x443a2d,roughness:1});
+// Upright seven-stick blasting bundle: one center stick with a six-stick ring,
+// cinched by two dark straps. Compact enough to read immediately as a cluster.
+const dynStickGeo=new THREE.CylinderGeometry(.085,.085,.62,10);
+const dynStickPositions=[[0,0]];
+for(let i=0;i<6;i++){const a=i*Math.PI/3;dynStickPositions.push([Math.cos(a)*.155,Math.sin(a)*.155])}
+for(const [x,z] of dynStickPositions){
+  const stick=new THREE.Mesh(dynStickGeo,dynRed);
+  stick.position.set(x,0,z);stick.castShadow=true;dynamite.add(stick);
+}
+for(const y of [-.17,.17]){
+  const band=new THREE.Mesh(new THREE.TorusGeometry(.255,.025,6,18),dynDark);
+  band.rotation.x=Math.PI/2;band.position.y=y;dynamite.add(band);
+}
+const fuseCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,.31,0),new THREE.Vector3(.07,.40,0),new THREE.Vector3(.04,.52,.03)]);
+const fuse=new THREE.Mesh(new THREE.TubeGeometry(fuseCurve,8,.018,5,false),dynFuse);dynamite.add(fuse);
+dynamite.scale.setScalar(1.28);
+
+const microscope=new THREE.Group();microscope.name='workshop-junk:microscope';microscope.visible=true;microscope.scale.setScalar(.62);workshopJunkBin.add(microscope);
+const microBrass=new THREE.MeshStandardMaterial({color:0xb4772e,roughness:.28,metalness:.76});
+const microDark=new THREE.MeshStandardMaterial({color:0x777b7a,roughness:.34,metalness:.68});
+const microGlass=new THREE.MeshPhysicalMaterial({color:0x8fb8ba,roughness:.12,metalness:0,transparent:true,opacity:.38,transmission:.45,depthWrite:false});
+// Tiny model-forward construction helper: define simple forms in elevation-like
+// coordinates, then derive their 3D placement from named anchors. The same spec can
+// emit diagnostic front/side/top projections without hand-maintaining 3D coordinates.
+// Workshop silhouette lift: simple objects are authored as readable 2D profiles,
+// then mechanically given depth. The profile is the design authority.
+function extrudedProfile(points,depth,material){
+  const s=new THREE.Shape();s.moveTo(points[0][0],points[0][1]);
+  for(let i=1;i<points.length;i++)s.lineTo(points[i][0],points[i][1]);
+  s.closePath();
+  const m=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false}),material);
+  m.position.z=-depth/2;return m;
+}
+const microscopeProfile={
+  base:[[-.62,0],[-.52,.10],[-.18,.14],[.36,.14],[.58,.08],[.62,0]],
+  arm:[[-.31,.10],[-.43,.18],[-.48,.48],[-.42,.82],[-.28,1.08],[-.08,1.25],[.18,1.25],[.18,1.15],[-.02,1.15],[-.16,1.00],[-.27,.76],[-.30,.50],[-.24,.28],[-.08,.14]]
+};
+const microBase=extrudedProfile(microscopeProfile.base,.34,microDark);microBase.name='spatial:base';microscope.add(microBase);
+const microArm=extrudedProfile(microscopeProfile.arm,.14,microBrass);microArm.name='spatial:arm';microscope.add(microArm);
+// Optical train is a vertical axis copied directly from the accepted side silhouette.
+const microTube=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,.48,10),microDark);microTube.position.set(.18,1.04,0);microscope.add(microTube);
+const microEyepiece=new THREE.Mesh(new THREE.CylinderGeometry(.15,.12,.12,10),microDark);microEyepiece.position.set(.18,1.34,0);microscope.add(microEyepiece);
+const microObjective=new THREE.Mesh(new THREE.CylinderGeometry(.05,.065,.12,10),microDark);microObjective.position.set(.18,.74,0);microscope.add(microObjective);
+const microStage=new THREE.Mesh(new THREE.BoxGeometry(.68,.10,.42),microBrass);microStage.position.set(.08,.55,0);microscope.add(microStage);
+const microSlide=new THREE.Mesh(new THREE.BoxGeometry(.36,.035,.16),microGlass);microSlide.position.set(.18,.62,0);microscope.add(microSlide);
+const microFocus=new THREE.Mesh(new THREE.CylinderGeometry(.10,.10,.16,10),microDark);microFocus.rotation.x=Math.PI/2;microFocus.position.set(-.04,.98,0);microscope.add(microFocus);
+// Keep the private construction evidence inspectable without making it runtime authority.
+
+dynamite.position.set(-.48,.52,0);dynamite.rotation.z=.12;dynamite.scale.setScalar(.92);
+microscope.position.set(.48,.10,0);microscope.rotation.y=-.28;
+// These are retired Workshop specimens. No interaction, spell, resident tool, phase, or explosion behavior survives.
 // First Workshop pressure: one semantic request becomes a visible 7x7 possibility field.
 // This is deliberately local evidence, not a generalized fabrication protocol.
 const workshopField=new THREE.Group();
