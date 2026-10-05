@@ -2159,19 +2159,37 @@ function scanConstructionT1(){
     }
   }
   coveragePasses.push(Object.freeze({pass:0,kind:'coarse',senses:dirs.length*targets.length,continuities:seenContinuities.size}));
-  // Curiosity is geometric, not semantic: inspect poorly sampled octants of the
-  // target volume and stop when a refinement pass discovers no new continuity.
-  const refineDirs=[[1,1,1],[-1,1,1],[1,1,-1],[-1,1,-1],[1,-1,1],[-1,-1,1],[1,-1,-1],[-1,-1,-1]];
+  // Curiosity is geometric, not semantic. T1 showed that "no new continuity"
+  // is not evidence of coverage: a small isolated body can sit between a few
+  // center-biased aim lines forever. Refinement therefore earns resolution over
+  // the whole observed volume before it earns convergence. Each pass samples
+  // cell centers on every principal projection; no semantic thing/count/location
+  // participates in the search.
+  const refineFaces=[
+    {d:[ 1,0,0],u:'y',v:'z'},{d:[-1,0,0],u:'y',v:'z'},
+    {d:[0, 1,0],u:'x',v:'z'},{d:[0,-1,0],u:'x',v:'z'},
+    {d:[0,0, 1],u:'x',v:'y'},{d:[0,0,-1],u:'x',v:'y'}
+  ];
+  const axisIndex={x:0,y:1,z:2};
+  let quietPasses=0;
   for(let pass=1;pass<=3;pass++){
-    const beforeCount=seenContinuities.size,frac=.72/pass;
-    const refineTargets=[];
-    for(const x of [-frac,0,frac])for(const y of [-frac,0,frac])for(const z of [-frac,0,frac])
-      if(Math.abs(x)+Math.abs(y)+Math.abs(z)>0)refineTargets.push(center.clone().add(new THREE.Vector3(x*size.x*.5,y*size.y*.5,z*size.z*.5)));
+    const beforeCount=seenContinuities.size,n=4*Math.pow(2,pass-1);
     let senses=0;
-    for(const d of refineDirs)for(const target of refineTargets){senseFrom(d,target);senses++;}
+    for(const face of refineFaces){
+      const ui=axisIndex[face.u],vi=axisIndex[face.v];
+      for(let a=0;a<n;a++)for(let b=0;b<n;b++){
+        const p=center.clone();
+        p.setComponent(ui,center.getComponent(ui)+(((a+.5)/n)-.5)*size.getComponent(ui));
+        p.setComponent(vi,center.getComponent(vi)+(((b+.5)/n)-.5)*size.getComponent(vi));
+        senseFrom(face.d,p);senses++;
+      }
+    }
     const discovered=seenContinuities.size-beforeCount;
-    coveragePasses.push(Object.freeze({pass,kind:'coverage-refinement',senses,continuities:seenContinuities.size,discovered}));
-    if(discovered===0)break;
+    quietPasses=discovered===0?quietPasses+1:0;
+    coveragePasses.push(Object.freeze({pass,kind:'multiscale-coverage-refinement',resolution:n,senses,continuities:seenContinuities.size,discovered,quietPasses}));
+    // One quiet scale is not convergence. Two successive scales without a new
+    // continuity are the current bounded stopping rule.
+    if(quietPasses>=2)break;
   }
   constructionT1Observer.pause();
   const transcript=constructionT1Observer.transcript().slice(before),hits=transcript.filter(r=>r.result?.target),occluded=transcript.filter(r=>r.result?.status==='occluded');
@@ -2184,7 +2202,7 @@ function scanConstructionT1(){
     continuity:c.continuity,hits:c.hits,min:Object.freeze(c.min.map(v=>+v.toFixed(4))),max:Object.freeze(c.max.map(v=>+v.toFixed(4))),meanNormal:Object.freeze(c.normalSum.map(v=>+(v/c.hits).toFixed(4)))
   })));
   const semanticThings=Object.freeze([...globalThis.semanticConstructionWitnessT1.things.values()].map(t=>{const b=new THREE.Box3().setFromObject(t.root),c=b.getCenter(new THREE.Vector3());return Object.freeze({id:t.id,kind:t.kind,bounds:Object.freeze({min:Object.freeze(b.min.toArray().map(v=>+v.toFixed(4))),max:Object.freeze(b.max.toArray().map(v=>+v.toFixed(4))),center:Object.freeze(c.toArray().map(v=>+v.toFixed(4)))})});}));
-  const report=Object.freeze({schema:'construction-observer-report/2',mission:'semantic-construction-t1',build:globalThis.__REPOSITORY_BUILD__||'source',createdAt:new Date().toISOString(),
+  const report=Object.freeze({schema:'construction-observer-report/3',mission:'semantic-construction-t2',build:globalThis.__REPOSITORY_BUILD__||'source',createdAt:new Date().toISOString(),
     evidence:Object.freeze({senses:transcript.length,hits:hits.length,misses:transcript.length-hits.length,occluded:occluded.length,coveragePasses:Object.freeze(coveragePasses),
       targetBounds:Object.freeze({min:Object.freeze(box.min.toArray().map(v=>+v.toFixed(4))),max:Object.freeze(box.max.toArray().map(v=>+v.toFixed(4))),center:Object.freeze(centerWorld.toArray().map(v=>+v.toFixed(4)))}),continuities,semanticThings,transcript:Object.freeze(transcript)})});
   constructionWitnessT1.userData.observerReport=report;globalThis.constructionT1ObserverReport=()=>report;return report;
