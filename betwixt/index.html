@@ -3261,6 +3261,120 @@ function updateRocketChase(now){
 function updateWorldD20(now){if(worldD20Animators.length){for(const animate of worldD20Animators)animate(now);}updateRocketChase(now);window.vestibuleDirty=true;}
 
 
+/* Function d20 — Workshop function laboratory.
+   The icosahedron is control geometry. Each face owns one deterministic function and
+   one private five-second clock. Consequence geometry is sampled from that function;
+   nothing above the control face is hand-authored. */
+const functionD20Duration=5000,functionD20Faces=[],functionD20Active=new Set();
+const functionD20Names=[
+  'linear','quadratic','gaussian','sinusoid','radial-wave',
+  'spiral','helix','exponential','sigmoid','power-law',
+  'voronoi','simplex-like','fractal','reaction-diffusion','wave',
+  'diffusion','vector-field','branching','metafield','sdf-compose'
+];
+function functionD20Hash(x,y,k=0){
+  const n=Math.sin(x*127.1+y*311.7+k*74.7)*43758.5453123;return n-Math.floor(n);
+}
+function functionD20Noise(x,y,k=0){
+  const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy;
+  const sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
+  const a=functionD20Hash(ix,iy,k),b=functionD20Hash(ix+1,iy,k),c=functionD20Hash(ix,iy+1,k),d=functionD20Hash(ix+1,iy+1,k);
+  return THREE.MathUtils.lerp(THREE.MathUtils.lerp(a,b,sx),THREE.MathUtils.lerp(c,d,sx),sy);
+}
+function functionD20Height(i,x,y,t){
+  const r=Math.hypot(x,y),a=Math.atan2(y,x),sat=1-Math.exp(-5*t);
+  switch(i){
+    case 0:return t*(.10+.34*(x+.55));
+    case 1:return t*.62*Math.max(0,1-r*r*1.8);
+    case 2:return t*.82*Math.exp(-8*((x-.08)**2+(y+.06)**2));
+    case 3:return t*.30*(.5+.5*Math.sin(15*x+3*Math.sin(4*y)));
+    case 4:return t*.30*(.5+.5*Math.sin(22*r));
+    case 5:{const q=a+9*r;return t*.48*Math.exp(-18*(Math.sin(q*.5)**2))*Math.max(0,1-r);}
+    case 6:{const q=a-13*r+8*t;return t*.46*Math.exp(-20*(Math.sin(q*.5)**2))*Math.max(0,1-r*.65);}
+    case 7:return .08*(Math.exp(Math.min(2.15,t*2.15*(x+.7)))-1)*Math.max(0,1-r*.65);
+    case 8:return .68*(1/(1+Math.exp(-10*(t-.5))))*Math.max(0,1-r*r*1.4);
+    case 9:return t*.72*Math.pow(Math.max(0,1-r*1.25),3.2);
+    case 10:{let d=9;for(let k=0;k<7;k++){const px=functionD20Hash(k,1,i)*1.25-.625,py=functionD20Hash(k,2,i)*1.25-.625;d=Math.min(d,Math.hypot(x-px,y-py));}return t*.34*Math.max(0,.32-d);}
+    case 11:return t*.32*functionD20Noise(x*5+2.1,y*5-1.7,i);
+    case 12:{let n=0,amp=.24,f=2.4;for(let k=0;k<4;k++){n+=amp*functionD20Noise(x*f+7,y*f-4,i+k);amp*=.5;f*=2;}return t*n;}
+    case 13:{const p=Math.sin(13*x+4*Math.sin(9*y+t*7))*Math.sin(13*y+4*Math.sin(8*x-t*5));return t*.28*Math.max(0,p*.5+.5);}
+    case 14:{const front=r-t*.82;return .46*Math.exp(-180*front*front)*sat;}
+    case 15:return .46*sat*Math.exp(-r*r/(.035+.34*t));
+    case 16:{const flow=Math.sin(7*(x*Math.cos(t*2)-y*Math.sin(t*2))+5*r);return t*.31*Math.max(0,flow);}
+    case 17:{let v=0;for(let k=0;k<5;k++){const ang=(k-2)*.42,yy=Math.abs(y+.58),branch=Math.abs(x-Math.sin(yy*8+k)*(.08+k*.018)-ang*yy*.32);v=Math.max(v,Math.exp(-150*branch*branch)*Math.max(0,1-yy*.72));}return t*.46*v;}
+    case 18:{let v=0;for(let k=0;k<5;k++){const px=(functionD20Hash(k,4,i)-.5)*.8,py=(functionD20Hash(k,5,i)-.5)*.8,rr=.08+.20*t;v+=Math.exp(-((x-px)**2+(y-py)**2)/(rr*rr));}return .13*Math.min(3,v)*sat;}
+    case 19:{const circle=Math.hypot(x+.12,y-.03)-(.12+.34*t),slot=Math.max(Math.abs(x-.18)-.10,Math.abs(y+.05)-(.08+.24*t));return .42*Math.max(0,Math.min(.18-circle,.16-slot))*5;}
+  }
+  return 0;
+}
+function buildFunctionD20Patch(A,B,C,normal,index,material){
+  const N=14,positions=[],uv=[];
+  const point=(i,j)=>{
+    const u=i/N,v=j/N,w=1-u-v;
+    return A.clone().multiplyScalar(w).addScaledVector(B,u).addScaledVector(C,v);
+  };
+  for(let i=0;i<N;i++)for(let j=0;j<N-i;j++){
+    const p0=point(i,j),p1=point(i+1,j),p2=point(i,j+1);
+    positions.push(...p0,...p1,...p2);uv.push(i/N,j/N,(i+1)/N,j/N,i/N,(j+1)/N);
+    if(j<N-i-1){const p3=point(i+1,j+1);positions.push(...p1,...p3,...p2);uv.push((i+1)/N,j/N,(i+1)/N,(j+1)/N,i/N,(j+1)/N);}
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  const mesh=new THREE.Mesh(geo,material);mesh.userData.functionFace=index;mesh.userData.base=new Float32Array(positions);mesh.userData.uv=new Float32Array(uv);mesh.userData.normal=normal.clone();mesh.castShadow=true;mesh.receiveShadow=true;
+  return mesh;
+}
+const functionD20=buildBetwixtable({
+  name:'function-d20',parent:legacyWorkshop,at:new THREE.Vector3(3.25,GROUND_Y,2.15),padding:.42,
+  build(root,spatial){
+    const baseGeo=new THREE.IcosahedronGeometry(1.34,0).toNonIndexed();
+    const baseMat=new THREE.MeshStandardMaterial({color:0xd7d0c0,roughness:.62,metalness:.12,flatShading:true});
+    const base=new THREE.Mesh(baseGeo,baseMat);base.name='function-d20:control';base.castShadow=true;base.receiveShadow=true;root.add(base);
+    const pos=baseGeo.attributes.position;
+    const patchMat=new THREE.MeshStandardMaterial({color:0xb9ad91,roughness:.72,metalness:.08,side:THREE.DoubleSide,flatShading:false});
+    for(let face=0;face<20;face++){
+      const A=new THREE.Vector3().fromBufferAttribute(pos,face*3),B=new THREE.Vector3().fromBufferAttribute(pos,face*3+1),C=new THREE.Vector3().fromBufferAttribute(pos,face*3+2);
+      const normal=new THREE.Vector3().crossVectors(B.clone().sub(A),C.clone().sub(A)).normalize();
+      if(normal.dot(A)<0)normal.negate();
+      const patch=buildFunctionD20Patch(A,B,C,normal,face,patchMat.clone());patch.name='function-d20:'+functionD20Names[face];root.add(patch);
+      functionD20Faces.push({index:face,name:functionD20Names[face],mesh:patch,t:0,started:null,done:false});
+    }
+    root.rotation.set(-.28,.36,.08);spatial.fit();
+  }
+});
+function functionD20Project(face,t){
+  const mesh=face.mesh,p=mesh.geometry.attributes.position,base=mesh.userData.base,uv=mesh.userData.uv,n=mesh.userData.normal;
+  for(let k=0;k<p.count;k++){
+    const u=uv[k*2],v=uv[k*2+1],x=(u-.333)*1.8,y=(v-.333)*1.8;
+    const h=functionD20Height(face.index,x,y,t);
+    p.setXYZ(k,base[k*3]+n.x*(.006+h),base[k*3+1]+n.y*(.006+h),base[k*3+2]+n.z*(.006+h));
+  }
+  p.needsUpdate=true;mesh.geometry.computeVertexNormals();
+}
+function functionD20Tap({raycaster}={}){
+  if(!raycaster)return true;
+  const hits=raycaster.intersectObjects(functionD20.userData.betwixtable.presentation.children,true);
+  const hit=hits.find(h=>Number.isInteger(h.object.userData.functionFace));
+  if(!hit)return true;
+  const face=functionD20Faces[hit.object.userData.functionFace];
+  if(face&&!face.done&&face.started==null){face.started=performance.now();functionD20Active.add(face);window.vestibuleDirty=true;}
+  return true;
+}
+functionD20.userData.betwixtable.interact=functionD20Tap;
+function updateFunctionD20(now){
+  if(!functionD20Active.size)return;
+  for(const face of [...functionD20Active]){
+    face.t=Math.min(1,(now-face.started)/functionD20Duration);functionD20Project(face,face.t);
+    if(face.t>=1){face.done=true;functionD20Active.delete(face);}
+  }
+  functionD20.userData.betwixtable.fit();window.vestibuleDirty=true;
+}
+globalThis.FunctionD20={
+  object:functionD20,
+  faces:functionD20Faces,
+  inspect:()=>functionD20Faces.map(f=>({face:f.index+1,name:f.name,t:+f.t.toFixed(4),active:f.started!=null&&!f.done,done:f.done})),
+  reset:()=>{for(const f of functionD20Faces){f.t=0;f.started=null;f.done=false;functionD20Project(f,0)}functionD20Active.clear();functionD20.userData.betwixtable.fit();window.vestibuleDirty=true;}
+};
+
+
 /* Rendezvous cairn laboratory — disposable transport pressure.
    This is intentionally a physical Betwixtable rather than a networking framework.
    The browser owns ntfy transport; the reconstructed scar log owns apparent shared state. */
@@ -5045,6 +5159,7 @@ renderer.setAnimationLoop((now)=>{
   updateObserverEye(now);
   updateWorkshopCrucibleOrb(now);
   updateWorldD20(now);
+  updateFunctionD20(now);
 
   updateWorkshop(now);
   if(workshopCrucibleEnabled){
