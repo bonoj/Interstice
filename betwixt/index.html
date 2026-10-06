@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="eecea70d" data-repository-sha="eecea70d55cf3745a5f6069332c4ea5054bb2e1f"><script>globalThis.__REPOSITORY_SHA__="eecea70d55cf3745a5f6069332c4ea5054bb2e1f";globalThis.__REPOSITORY_BUILD__="eecea70d";</script><script>(()=>{
+<body data-repository-build="857bb8ed" data-repository-sha="857bb8ed2f86aa5dfe4ebb62104c4d752e56a285"><script>globalThis.__REPOSITORY_SHA__="857bb8ed2f86aa5dfe4ebb62104c4d752e56a285";globalThis.__REPOSITORY_BUILD__="857bb8ed";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -6579,7 +6579,7 @@ function createFunctionalTerrainV0({THREE,size=8.4,resolution=45,seed=741}={}){
         if(alienMigration.dest&&alienMigration.destAmount>0){
           const dd=Math.hypot(x-alienMigration.dest.x,z-alienMigration.dest.z),u=clamp(1-dd/alienMigration.radius,0,1);
           const claim=smooth(u)*alienMigration.destAmount;
-          if(claim>0)color.lerp(materialColors[alienMigration.sourceKind],claim*.92);
+          if(claim>0)color.lerp(materialColors[alienMigration.kind],claim*.92);
         }
       }
       pos.setY(i,y);colors[i*3]=color.r;colors[i*3+1]=color.g;colors[i*3+2]=color.b;
