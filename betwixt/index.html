@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="47653992" data-repository-sha="47653992e8d115e0e7ab238a676219a815e17d68"><script>globalThis.__REPOSITORY_SHA__="47653992e8d115e0e7ab238a676219a815e17d68";globalThis.__REPOSITORY_BUILD__="47653992";</script><script>(()=>{
+<body data-repository-build="beae7e58" data-repository-sha="beae7e5889bcc2ec582089b6e667f79a202ba624"><script>globalThis.__REPOSITORY_SHA__="beae7e5889bcc2ec582089b6e667f79a202ba624";globalThis.__REPOSITORY_BUILD__="beae7e58";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1620,8 +1620,8 @@ function ensureWorkshopTerrain(){
   try{workshopTerrain=createTerrainSystem({THREE,scene})}
   finally{delete globalThis.__workshopTerrainOwner}
   workshopTerrain.owner=owner;
+  workshopTerrain.initializeFunctionalBiomes?.();
   if(typeof createTerrainGenesis==='function')workshopTerrainGenesis=createTerrainGenesis({terrain:workshopTerrain});
-  workshopTerrain.startFunctionalArrival?.();
   // Present the intact Crucible apparatus as a raised specimen in Workshop.
   // Its terrain/plinth relationship remains untouched inside this owner transform.
   owner.position.y=3.0;
@@ -2003,6 +2003,211 @@ function buildBetwixtable({name='betwixtable',parent=legacyWorkshop,at=null,padd
 
 globalThis.Betwixtable=buildBetwixtable;
 
+// SEMANTIC CONSTRUCTION WITNESS T0
+// Deliberately meaningless. This is the first Workshop inhabitant whose physical
+// organization is derived from named attachment relations rather than authored world transforms.
+const constructionWitness=buildBetwixtable({
+  name:'semantic-construction-t0',
+  parent:legacyWorkshop,
+  at:new THREE.Vector3(0,GROUND_Y,0),
+  padding:.34,
+  build(presentation,spatial){
+    const warm=new THREE.MeshStandardMaterial({color:0xf0f0ed,roughness:.68,metalness:.04});
+    const brass=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.34,metalness:.62});
+    const bearing=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.30,metalness:.50});
+    const things=new Map(),relations=[];
+    function thing(id,kind,ports,mesh,frames){
+      const root=new THREE.Group();root.name='construction:'+id;root.add(mesh);presentation.add(root);
+      things.set(id,{id,kind,ports:new Set(ports),root,frames});return root;
+    }
+    thing('slab-A','slab',['top','bottom'],
+      new THREE.Mesh(new THREE.BoxGeometry(1.25,.13,.78),warm),
+      {top:{p:[0,.065,0],out:[0,1,0],up:[0,0,1]},bottom:{p:[0,-.065,0],out:[0,-1,0],up:[0,0,1]}}
+    );
+    thing('post-A','post',['top','bottom'],
+      new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,.88,12),brass),
+      {top:{p:[0,.44,0],out:[0,1,0],up:[0,0,1]},bottom:{p:[0,-.44,0],out:[0,-1,0],up:[0,0,1]}}
+    );
+    const railMesh=new THREE.Mesh(new THREE.CylinderGeometry(.052,.052,1.02,10),brass);railMesh.rotation.z=Math.PI/2;
+    thing('rail-A','rail',['a','b'],railMesh,
+      {a:{p:[-.51,0,0],out:[-1,0,0],up:[0,1,0]},b:{p:[.51,0,0],out:[1,0,0],up:[0,1,0]}}
+    );
+    const ringMesh=new THREE.Mesh(new THREE.TorusGeometry(.25,.042,8,24),brass);ringMesh.rotation.y=Math.PI/2;
+    thing('ring-A','ring',['center'],ringMesh,
+      {center:{p:[0,0,0],out:[0,1,0],up:[0,0,1]}}
+    );
+    thing('bead-A','bead',['center'],
+      new THREE.Mesh(new THREE.SphereGeometry(.09,12,8),bearing),
+      {center:{p:[0,0,0],out:[0,-1,0],up:[0,0,1]}}
+    );
+    function frameWorld(t,port){
+      const f=t.frames[port],p=new THREE.Vector3(...f.p),out=new THREE.Vector3(...f.out),up=new THREE.Vector3(...f.up);
+      t.root.localToWorld(p);const q=t.root.getWorldQuaternion(new THREE.Quaternion());
+      return {p,out:out.applyQuaternion(q).normalize(),up:up.applyQuaternion(q).normalize()};
+    }
+    function attach(childId,childPort,parentId,parentPort){
+      const child=things.get(childId),parent=things.get(parentId);
+      if(!child?.ports.has(childPort)||!parent?.ports.has(parentPort))throw Error('construction relation endpoint missing');
+      if(relations.some(r=>(r.a[0]===childId&&r.a[1]===childPort)||(r.b[0]===childId&&r.b[1]===childPort)||(r.a[0]===parentId&&r.a[1]===parentPort)||(r.b[0]===parentId&&r.b[1]===parentPort)))throw Error('construction port occupied');
+      presentation.updateMatrixWorld(true);
+      const cf=frameWorld(child,childPort),pf=frameWorld(parent,parentPort);
+      const q=new THREE.Quaternion().setFromUnitVectors(cf.out,pf.out.clone().negate());
+      child.root.quaternion.premultiply(q);presentation.updateMatrixWorld(true);
+      const after=frameWorld(child,childPort);
+      child.root.position.add(pf.p.clone().sub(after.p));
+      relations.push({a:[childId,childPort],b:[parentId,parentPort]});
+    }
+    // Authored topology; transforms are consequences.
+    attach('post-A','top','slab-A','bottom');
+    // Continue the same rule: topology first; each placement is solved from its two frames.
+    // These relations are intentionally semantically boring.
+    things.get('post-A').frames.side={p:[0,.12,0],out:[1,0,0],up:[0,1,0]};things.get('post-A').ports.add('side');
+    attach('rail-A','a','post-A','side');
+    things.get('rail-A').frames.mid={p:[0,0,0],out:[0,-1,0],up:[1,0,0]};things.get('rail-A').ports.add('mid');
+    attach('ring-A','center','rail-A','mid');
+    things.get('ring-A').frames.low={p:[0,-.25,0],out:[0,-1,0],up:[0,0,1]};things.get('ring-A').ports.add('low');
+    attach('bead-A','center','ring-A','low');
+    for(const t of things.values())t.root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    presentation.userData.semanticConstruction={things,relations};
+    globalThis.semanticConstructionWitness=presentation.userData.semanticConstruction;
+    queueMicrotask(()=>{spatial.seat();spatial.fit();window.vestibuleDirty=true});
+  }
+});
+
+
+// SEMANTIC CONSTRUCTION WITNESS T1 — same topology, earned attachment surfaces.
+const constructionWitnessT1=buildBetwixtable({
+  name:'semantic-construction-t1',parent:legacyWorkshop,at:new THREE.Vector3(2.15,GROUND_Y,0),padding:.34,
+  build(presentation,spatial){
+    const warm=new THREE.MeshStandardMaterial({color:0xf0f0ed,roughness:.68,metalness:.04});
+    const brass=new THREE.MeshStandardMaterial({color:0x9b6638,roughness:.34,metalness:.62});
+    const things=new Map(),relations=[];
+    function add(id,kind,ports,mesh,frame){
+      const root=new THREE.Group();root.name='construction-t1:'+id;root.add(mesh);presentation.add(root);
+      things.set(id,{id,kind,ports:new Set(ports),root,frame});return root;
+    }
+    add('slab-A','slab',['bottom'],new THREE.Mesh(new THREE.BoxGeometry(1.25,.13,.78),warm),
+      p=>p==='bottom'?{p:[0,-.065,0],out:[0,-1,0],up:[0,0,1]}:null);
+    add('post-A','post',['top','side'],new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,.88,12),brass),
+      (p,s={})=>p==='top'?{p:[0,.44,0],out:[0,1,0],up:[0,0,1]}:
+        p==='side'?{p:[.085,(s.along??.27)*.44,0],out:[1,0,0],up:[0,1,0]}:null);
+    const rail=new THREE.Mesh(new THREE.CylinderGeometry(.052,.052,1.02,10),brass);rail.rotation.z=Math.PI/2;
+    add('rail-A','rail',['a','side'],rail,(p,s={})=>p==='a'?{p:[-.51,0,0],out:[-1,0,0],up:[0,1,0]}:
+      p==='side'?{p:[(s.along??0)*.51,-.052,0],out:[0,-1,0],up:[1,0,0]}:null);
+    add('ring-A','ring',['rim'],new THREE.Mesh(new THREE.TorusGeometry(.25,.042,8,24),brass),
+      (p,s={})=>{const a=s.angle??Math.PI/2;return p==='rim'?{p:[Math.cos(a)*.25,Math.sin(a)*.25,0],out:[Math.cos(a),Math.sin(a),0],up:[0,0,1]}:null});
+    add('bead-A','bead',['surface'],new THREE.Mesh(new THREE.SphereGeometry(.09,12,8),brass),
+      (p,s={})=>p==='surface'?{p:[0,.09,0],out:[0,1,0],up:[0,0,1]}:null);
+    function worldFrame(t,port,selector){
+      const f=t.frame(port,selector);if(!f)throw Error('T1 attachment frame missing');
+      const p=new THREE.Vector3(...f.p);t.root.localToWorld(p);
+      const q=t.root.getWorldQuaternion(new THREE.Quaternion());
+      return {p,out:new THREE.Vector3(...f.out).applyQuaternion(q).normalize(),up:new THREE.Vector3(...f.up).applyQuaternion(q).normalize()};
+    }
+    function attach(childId,childPort,parentId,parentPort,{child={},parent={}}={}){
+      const c=things.get(childId),p=things.get(parentId);
+      // Continuous surfaces may host multiple relations at distinct selectors.
+      // Only discrete ports are exclusive as a whole.
+      const endpointOccupied=(id,port,selector)=>{
+        const t=things.get(id),surface=['side','rim','surface'].includes(port);
+        if(surface)return relations.some(r=>r.some(e=>e.id===id&&e.port===port&&JSON.stringify(e.selector||{})===JSON.stringify(selector||{})));
+        return relations.some(r=>r.some(e=>e.id===id&&e.port===port));
+      };
+      if(endpointOccupied(childId,childPort,child)||endpointOccupied(parentId,parentPort,parent))throw Error('T1 construction attachment occupied');
+      presentation.updateMatrixWorld(true);const cf=worldFrame(c,childPort,child),pf=worldFrame(p,parentPort,parent);
+      c.root.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors(cf.out,pf.out.clone().negate()));
+      presentation.updateMatrixWorld(true);c.root.position.add(pf.p.clone().sub(worldFrame(c,childPort,child).p));
+      relations.push([{id:childId,port:childPort,selector:{...child}},{id:parentId,port:parentPort,selector:{...parent}}]);
+    }
+    attach('post-A','top','slab-A','bottom');
+    attach('rail-A','a','post-A','side',{parent:{along:.27}});
+    attach('ring-A','rim','rail-A','side',{parent:{along:0},child:{angle:Math.PI/2}});
+    attach('bead-A','surface','ring-A','rim',{parent:{angle:-Math.PI/2}});
+    for(const t of things.values())t.root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    presentation.userData.semanticConstruction={generation:'T1',things,relations};
+    globalThis.semanticConstructionWitnessT1=presentation.userData.semanticConstruction;
+    queueMicrotask(()=>{spatial.seat();spatial.fit();window.vestibuleDirty=true});
+    // First tap summons the Twixt. Second tap observes the thing itself.
+    spatial.interact=()=>tapConstructionT1();
+  }
+});
+let constructionT1Observer=null;
+function scanConstructionT1(){
+  constructionT1Observer??=createBoundedWitness({
+    parent:constructionWitnessT1,targetBetwixtable:constructionWitnessT1,
+    position:[-2.85,1.35,0],budget:Infinity,maxDistance:8
+  });
+  const box=constructionWitnessT1.userData.betwixtable.bounds(),centerWorld=box.getCenter(new THREE.Vector3());
+  const center=constructionWitnessT1.worldToLocal(centerWorld.clone()),size=box.getSize(new THREE.Vector3());
+  const targets=[
+    [0,0,0],[0,.34,0],[0,-.34,0],[.34,0,0],[-.34,0,0],[0,0,.34],[0,0,-.34],
+    [.28,.28,0],[-.28,.28,0],[.28,-.28,0],[-.28,-.28,0]
+  ].map(([x,y,z])=>center.clone().add(new THREE.Vector3(x*size.x,y*size.y,z*size.z)));
+  const dirs=[[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[1,.7,0],[-1,.7,0],[0,.7,1],[0,.7,-1],[1,-.45,1],[-1,-.45,1],[1,-.45,-1],[-1,-.45,-1]];
+  const before=constructionT1Observer.transcript().length;
+  const seenContinuities=new Set(),coveragePasses=[];
+  function senseFrom(d,target){
+    const pose=constructionT1Observer.place(d),origin=new THREE.Vector3(...pose.position);
+    constructionT1Observer.aim(target.clone().sub(origin).normalize().toArray());
+    const record=constructionT1Observer.sense(),c=record.result?.target?.continuity;
+    if(c!=null)seenContinuities.add(c);return record;
+  }
+  for(const d of dirs){
+    const pose=constructionT1Observer.place(d),origin=new THREE.Vector3(...pose.position);
+    for(const target of targets){
+      constructionT1Observer.aim(target.clone().sub(origin).normalize().toArray());
+      const record=constructionT1Observer.sense(),c=record.result?.target?.continuity;if(c!=null)seenContinuities.add(c);
+    }
+  }
+  coveragePasses.push(Object.freeze({pass:0,kind:'coarse',senses:dirs.length*targets.length,continuities:seenContinuities.size}));
+  // Curiosity is geometric, not semantic: inspect poorly sampled octants of the
+  // target volume and stop when a refinement pass discovers no new continuity.
+  const refineDirs=[[1,1,1],[-1,1,1],[1,1,-1],[-1,1,-1],[1,-1,1],[-1,-1,1],[1,-1,-1],[-1,-1,-1]];
+  for(let pass=1;pass<=3;pass++){
+    const beforeCount=seenContinuities.size,frac=.72/pass;
+    const refineTargets=[];
+    for(const x of [-frac,0,frac])for(const y of [-frac,0,frac])for(const z of [-frac,0,frac])
+      if(Math.abs(x)+Math.abs(y)+Math.abs(z)>0)refineTargets.push(center.clone().add(new THREE.Vector3(x*size.x*.5,y*size.y*.5,z*size.z*.5)));
+    let senses=0;
+    for(const d of refineDirs)for(const target of refineTargets){senseFrom(d,target);senses++;}
+    const discovered=seenContinuities.size-beforeCount;
+    coveragePasses.push(Object.freeze({pass,kind:'coverage-refinement',senses,continuities:seenContinuities.size,discovered}));
+    if(discovered===0)break;
+  }
+  constructionT1Observer.pause();
+  const transcript=constructionT1Observer.transcript().slice(before),hits=transcript.filter(r=>r.result?.target),occluded=transcript.filter(r=>r.result?.status==='occluded');
+  const continuitySummary=new Map();
+  for(const record of hits){
+    const h=record.result.target,c=continuitySummary.get(h.continuity)??{continuity:h.continuity,hits:0,min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity],normalSum:[0,0,0]};
+    c.hits++;for(let i=0;i<3;i++){c.min[i]=Math.min(c.min[i],h.point[i]);c.max[i]=Math.max(c.max[i],h.point[i]);if(h.normal)c.normalSum[i]+=h.normal[i];}continuitySummary.set(h.continuity,c);
+  }
+  const continuities=Object.freeze([...continuitySummary.values()].sort((a,b)=>a.continuity-b.continuity).map(c=>Object.freeze({
+    continuity:c.continuity,hits:c.hits,min:Object.freeze(c.min.map(v=>+v.toFixed(4))),max:Object.freeze(c.max.map(v=>+v.toFixed(4))),meanNormal:Object.freeze(c.normalSum.map(v=>+(v/c.hits).toFixed(4)))
+  })));
+  const semanticThings=Object.freeze([...globalThis.semanticConstructionWitnessT1.things.values()].map(t=>{const b=new THREE.Box3().setFromObject(t.root),c=b.getCenter(new THREE.Vector3());return Object.freeze({id:t.id,kind:t.kind,bounds:Object.freeze({min:Object.freeze(b.min.toArray().map(v=>+v.toFixed(4))),max:Object.freeze(b.max.toArray().map(v=>+v.toFixed(4))),center:Object.freeze(c.toArray().map(v=>+v.toFixed(4)))})});}));
+  const report=Object.freeze({schema:'construction-observer-report/2',mission:'semantic-construction-t1',build:globalThis.__REPOSITORY_BUILD__||'source',createdAt:new Date().toISOString(),
+    evidence:Object.freeze({senses:transcript.length,hits:hits.length,misses:transcript.length-hits.length,occluded:occluded.length,coveragePasses:Object.freeze(coveragePasses),
+      targetBounds:Object.freeze({min:Object.freeze(box.min.toArray().map(v=>+v.toFixed(4))),max:Object.freeze(box.max.toArray().map(v=>+v.toFixed(4))),center:Object.freeze(centerWorld.toArray().map(v=>+v.toFixed(4)))}),continuities,semanticThings,transcript:Object.freeze(transcript)})});
+  constructionWitnessT1.userData.observerReport=report;globalThis.constructionT1ObserverReport=()=>report;return report;
+}
+function downloadConstructionT1Report(){
+  const report=scanConstructionT1(),blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='construction-observer-t1-'+Date.now()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),0);return report;
+}
+function tapConstructionT1(){
+  if(focusedWorkshopObject!==constructionWitnessT1){
+    if(focusedWorkshopObject)telescopeWorkshopFocus(constructionWitnessT1);else beginWorkshopFocus(constructionWitnessT1,true);
+    return true;
+  }
+  if(workshopFocusMotion)return true;
+  downloadConstructionT1Report();return true;
+}
+
+
+// The original Jupurn + lab-world organism has moved into Workshop under one
+// plain positioning carrier. The aggregate is deliberately NOT Betwixtable;
+// its existing children retain their own focus semantics. Its own bottom is seated
+// above the Jovian system with measured breathing room rather than a center guess.
 const legacyLabCarrier=new THREE.Group();
 legacyLabCarrier.name='legacy-lab-worlds-carrier';
 legacyWorkshop.add(legacyLabCarrier);
@@ -2399,8 +2604,6 @@ function workshopTube(g,x,y,z,len=.9,r=.07,m=workshopMetal,tilt=0){
 function workshopArc(g,r=.5,m=workshopWood){
   const q=new THREE.Mesh(new THREE.TorusGeometry(r,.045,6,18,Math.PI),m);q.rotation.x=Math.PI/2;q.castShadow=true;g.add(q);return q;
 }
-
-
 
 const artilleryNames=[
 'Bombard','Ship Cannon','Field Gun','Mountain Gun','Siege Mortar','Howitzer','Carronade',
@@ -2837,10 +3040,9 @@ const workshopTabletopBetwixtable=buildBetwixtable({
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.32,.025,8,28),brass);
       ring.rotation.set(...rotation);ring.castShadow=true;cage.add(ring);
     }
-    // Two earned construction fossils inhabit the thoughtform now. Preserve the
-    // existing torchship and instance the exact semantic-construction presentation;
-    // neither is rebuilt for display.
-    const azTorch=new THREE.Group();azTorch.name='thoughtform:az-torchship';azTorch.scale.setScalar(.34);cage.add(azTorch);
+    // Tiny dealer's-choice torchship retained as physical residue of the A-Z fleet pressure test.
+    // It is memory, not a new authority or modeling primitive.
+    const azTorch=new THREE.Group();azTorch.name='thoughtform:az-torchship';azTorch.scale.setScalar(.34);azTorch.position.set(0,-.015,0);cage.add(azTorch);
     const azHull=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.30,8),brassDark);azTorch.add(azHull);
     const azDrive=new THREE.Mesh(new THREE.CylinderGeometry(.095,.045,.10,10),warm);azDrive.position.y=-.20;azTorch.add(azDrive);
     const azGlass=new THREE.Mesh(new THREE.SphereGeometry(.065,10,7),glassFace);azGlass.position.y=.20;azTorch.add(azGlass);
@@ -2848,12 +3050,6 @@ const workshopTabletopBetwixtable=buildBetwixtable({
       const a=i*Math.PI/3,rail=new THREE.Mesh(new THREE.BoxGeometry(.018,.16,.018),brass);
       rail.position.set(Math.cos(a)*.085,0,Math.sin(a)*.085);rail.rotation.y=a;azTorch.add(rail);
     }
-    thoughtform.userData.animate=(t)=>{
-      const shipA=t*.00072;
-      azTorch.position.set(Math.cos(shipA)*.105,Math.sin(shipA*.73)*.038,Math.sin(shipA)*.105);
-      // Keep each artifact's own attitude; the orbit moves them without center-facing billboarding.
-      azTorch.rotation.set(.22,.35,.12);
-    };
 
     // Second Thoughtform: a cold-boot capsule for the earned Chemlab crossing.
     // It is deliberately downstream residue: enough to resume instantly, never authority over code/science.
@@ -3260,205 +3456,6 @@ function updateRocketChase(now){
   camera.position.lerp(desired,.15);target.lerp(look,.18);camera.up.lerp(chaseUp,.1).normalize();camera.lookAt(target);
 }
 function updateWorldD20(now){if(worldD20Animators.length){for(const animate of worldD20Animators)animate(now);}updateRocketChase(now);window.vestibuleDirty=true;}
-
-
-/* Functional Biomes — Workshop bounded-function laboratory.
-   The icosahedron is control geometry. Each face owns one deterministic function and
-   one private five-second clock. Consequence geometry is sampled from that function;
-   nothing above the control face is hand-authored. */
-const functionD20Duration=5000,functionD20Faces=[],functionD20Active=new Set();
-const functionD20Names=[
-  'linear','quadratic','gaussian','sinusoid','radial-wave',
-  'spiral','helix','exponential','sigmoid','power-law',
-  'voronoi','simplex-like','fractal','reaction-diffusion','wave',
-  'diffusion','vector-field','branching','metafield','sdf-compose'
-];
-function functionD20Hash(x,y,k=0){
-  const n=Math.sin(x*127.1+y*311.7+k*74.7)*43758.5453123;return n-Math.floor(n);
-}
-function functionD20Noise(x,y,k=0){
-  const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy;
-  const sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
-  const a=functionD20Hash(ix,iy,k),b=functionD20Hash(ix+1,iy,k),c=functionD20Hash(ix,iy+1,k),d=functionD20Hash(ix+1,iy+1,k);
-  return THREE.MathUtils.lerp(THREE.MathUtils.lerp(a,b,sx),THREE.MathUtils.lerp(c,d,sx),sy);
-}
-function functionD20Height(i,x,y,t){
-  const r=Math.hypot(x,y),a=Math.atan2(y,x),sat=1-Math.exp(-5*t);
-  switch(i){
-    case 0:return t*(.10+.34*(x+.55));
-    case 1:return t*.62*Math.max(0,1-r*r*1.8);
-    case 2:return t*.82*Math.exp(-8*((x-.08)**2+(y+.06)**2));
-    case 3:return t*.30*(.5+.5*Math.sin(15*x+3*Math.sin(4*y)));
-    case 4:return t*.30*(.5+.5*Math.sin(22*r));
-    case 5:{const q=a+9*r;return t*.48*Math.exp(-18*(Math.sin(q*.5)**2))*Math.max(0,1-r);}
-    case 6:{const q=a-13*r+8*t;return t*.46*Math.exp(-20*(Math.sin(q*.5)**2))*Math.max(0,1-r*.65);}
-    case 7:return .08*(Math.exp(Math.min(2.15,t*2.15*(x+.7)))-1)*Math.max(0,1-r*.65);
-    case 8:return .68*(1/(1+Math.exp(-10*(t-.5))))*Math.max(0,1-r*r*1.4);
-    case 9:return t*.72*Math.pow(Math.max(0,1-r*1.25),3.2);
-    case 10:{let d=9;for(let k=0;k<7;k++){const px=functionD20Hash(k,1,i)*1.25-.625,py=functionD20Hash(k,2,i)*1.25-.625;d=Math.min(d,Math.hypot(x-px,y-py));}return t*.34*Math.max(0,.32-d);}
-    case 11:return t*.32*functionD20Noise(x*5+2.1,y*5-1.7,i);
-    case 12:{let n=0,amp=.24,f=2.4;for(let k=0;k<4;k++){n+=amp*functionD20Noise(x*f+7,y*f-4,i+k);amp*=.5;f*=2;}return t*n;}
-    case 13:{const p=Math.sin(13*x+4*Math.sin(9*y+t*7))*Math.sin(13*y+4*Math.sin(8*x-t*5));return t*.28*Math.max(0,p*.5+.5);}
-    case 14:{const front=r-t*.82;return .46*Math.exp(-180*front*front)*sat;}
-    case 15:return .46*sat*Math.exp(-r*r/(.035+.34*t));
-    case 16:{const flow=Math.sin(7*(x*Math.cos(t*2)-y*Math.sin(t*2))+5*r);return t*.31*Math.max(0,flow);}
-    case 17:{let v=0;for(let k=0;k<5;k++){const ang=(k-2)*.42,yy=Math.abs(y+.58),branch=Math.abs(x-Math.sin(yy*8+k)*(.08+k*.018)-ang*yy*.32);v=Math.max(v,Math.exp(-150*branch*branch)*Math.max(0,1-yy*.72));}return t*.46*v;}
-    case 18:{let v=0;for(let k=0;k<5;k++){const px=(functionD20Hash(k,4,i)-.5)*.8,py=(functionD20Hash(k,5,i)-.5)*.8,rr=.08+.20*t;v+=Math.exp(-((x-px)**2+(y-py)**2)/(rr*rr));}return .13*Math.min(3,v)*sat;}
-    case 19:{const circle=Math.hypot(x+.12,y-.03)-(.12+.34*t),slot=Math.max(Math.abs(x-.18)-.10,Math.abs(y+.05)-(.08+.24*t));return .42*Math.max(0,Math.min(.18-circle,.16-slot))*5;}
-  }
-  return 0;
-}
-function buildFunctionD20Patch(A,B,C,normal,index,material){
-  const N=14,positions=[],uv=[];
-  const point=(i,j)=>{
-    const u=i/N,v=j/N,w=1-u-v;
-    return A.clone().multiplyScalar(w).addScaledVector(B,u).addScaledVector(C,v);
-  };
-  for(let i=0;i<N;i++)for(let j=0;j<N-i;j++){
-    const p0=point(i,j),p1=point(i+1,j),p2=point(i,j+1);
-    positions.push(...p0,...p1,...p2);uv.push(i/N,j/N,(i+1)/N,j/N,i/N,(j+1)/N);
-    if(j<N-i-1){const p3=point(i+1,j+1);positions.push(...p1,...p3,...p2);uv.push((i+1)/N,j/N,(i+1)/N,(j+1)/N,i/N,(j+1)/N);}
-  }
-  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  const mesh=new THREE.Mesh(geo,material);mesh.userData.functionFace=index;mesh.userData.base=new Float32Array(positions);mesh.userData.uv=new Float32Array(uv);mesh.userData.normal=normal.clone();mesh.castShadow=true;mesh.receiveShadow=true;
-  return mesh;
-}
-const functionD20=buildBetwixtable({
-  name:'functional-biomes',parent:legacyWorkshop,at:new THREE.Vector3(3.25,GROUND_Y,2.15),padding:.42,
-  build(root,spatial){
-    const baseGeo=new THREE.IcosahedronGeometry(1.34,0).toNonIndexed();
-    // The twenty sampled patches ARE the die. There is no second control skin underneath:
-    // t=0 is exactly planar, so idle faces cannot z-fight with duplicate geometry.
-    const pos=baseGeo.attributes.position;
-    const patchMat=new THREE.MeshStandardMaterial({color:0xd7d0c0,roughness:.62,metalness:.12,side:THREE.DoubleSide,flatShading:false});
-    for(let face=0;face<20;face++){
-      const A=new THREE.Vector3().fromBufferAttribute(pos,face*3),B=new THREE.Vector3().fromBufferAttribute(pos,face*3+1),C=new THREE.Vector3().fromBufferAttribute(pos,face*3+2);
-      const normal=new THREE.Vector3().crossVectors(B.clone().sub(A),C.clone().sub(A)).normalize();
-      if(normal.dot(A)<0)normal.negate();
-      const patch=buildFunctionD20Patch(A,B,C,normal,face,patchMat.clone());patch.name='function-d20:'+functionD20Names[face];root.add(patch);
-      functionD20Faces.push({index:face,name:functionD20Names[face],mesh:patch,t:0,started:null,done:false});
-    }
-    root.rotation.set(-.28,.36,.08);spatial.fit();
-  }
-});
-function functionD20Project(face,t){
-  const mesh=face.mesh,p=mesh.geometry.attributes.position,base=mesh.userData.base,uv=mesh.userData.uv,n=mesh.userData.normal;
-  for(let k=0;k<p.count;k++){
-    const u=uv[k*2],v=uv[k*2+1],w=1-u-v,x=(u-.333)*1.8,y=(v-.333)*1.8;
-    // Dirichlet-ish face boundary: all three triangle edges are invariant at h=0.
-    // Resistance is concentrated in a narrow barycentric edge band; interiors keep the
-    // full function while value and slope settle toward the original planar face.
-    const edge=Math.max(0,Math.min(u,v,w)),band=.115;
-    const q=Math.min(1,edge/band),edgeLock=q*q*(3-2*q);
-    const h=functionD20Height(face.index,x,y,t)*edgeLock;
-    p.setXYZ(k,base[k*3]+n.x*h,base[k*3+1]+n.y*h,base[k*3+2]+n.z*h);
-  }
-  p.needsUpdate=true;mesh.geometry.computeVertexNormals();
-}
-function functionD20Tap({raycaster}={}){
-  if(!raycaster)return true;
-  const hits=raycaster.intersectObjects(functionD20.userData.betwixtable.presentation.children,true);
-  const hit=hits.find(h=>Number.isInteger(h.object.userData.functionFace));
-  if(!hit)return true;
-  const face=functionD20Faces[hit.object.userData.functionFace];
-  if(face&&!face.done&&face.started==null){face.started=performance.now();functionD20Active.add(face);window.vestibuleDirty=true;}
-  return true;
-}
-functionD20.userData.betwixtable.interact=functionD20Tap;
-function updateFunctionD20(now){
-  if(!functionD20Active.size)return;
-  for(const face of [...functionD20Active]){
-    face.t=Math.min(1,(now-face.started)/functionD20Duration);functionD20Project(face,face.t);
-    if(face.t>=1){face.done=true;functionD20Active.delete(face);}
-  }
-  functionD20.userData.betwixtable.fit();window.vestibuleDirty=true;
-}
-globalThis.FunctionD20={
-  object:functionD20,
-  faces:functionD20Faces,
-  inspect:()=>functionD20Faces.map(f=>({face:f.index+1,name:f.name,t:+f.t.toFixed(4),active:f.started!=null&&!f.done,done:f.done})),
-  reset:()=>{for(const f of functionD20Faces){f.t=0;f.started=null;f.done=false;functionD20Project(f,0)}functionD20Active.clear();functionD20.userData.betwixtable.fit();window.vestibuleDirty=true;}
-};
-
-
-/* Functional Structures — authored cross-sections imply continuous volume.
-   No box/cylinder primitives: every visible structure below is sampled from stations. */
-function buildSectionLoft(stations,{sides=18,material,cap=true,name='section-loft'}={}){
-  const verts=[],indices=[];
-  const ring=(st,j)=>{
-    const a=(j/sides)*Math.PI*2+st.twist;
-    // superellipse-like authored section: round, square, pinched and asymmetric forms
-    const c=Math.cos(a),q=Math.sin(a),p=st.power||2;
-    const sx=Math.sign(c)*Math.pow(Math.abs(c),2/p);
-    const sz=Math.sign(q)*Math.pow(Math.abs(q),2/p);
-    return [st.x+sx*st.rx*(1+(st.lobe||0)*Math.cos(3*a)),st.y,st.z+sz*st.rz*(1-(st.lobe||0)*.45*Math.cos(3*a))];
-  };
-  for(const st of stations)for(let j=0;j<sides;j++)verts.push(...ring(st,j));
-  for(let i=0;i<stations.length-1;i++)for(let j=0;j<sides;j++){
-    const a=i*sides+j,b=i*sides+(j+1)%sides,c=(i+1)*sides+(j+1)%sides,d=(i+1)*sides+j;
-    indices.push(a,b,d,b,c,d);
-  }
-  if(cap){
-    const bottom=verts.length/3;verts.push(stations[0].x,stations[0].y,stations[0].z);
-    const top=verts.length/3;const last=stations[stations.length-1];verts.push(last.x,last.y,last.z);
-    for(let j=0;j<sides;j++){indices.push(bottom,(j+1)%sides,j);const a=(stations.length-1)*sides+j,b=(stations.length-1)*sides+(j+1)%sides;indices.push(top,a,b);}
-  }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setIndex(indices);g.computeVertexNormals();
-  const m=new THREE.Mesh(g,material);m.name=name;m.castShadow=true;m.receiveShadow=true;return m;
-}
-function interpolateStations(authored,steps=7){
-  const out=[];
-  for(let i=0;i<authored.length-1;i++)for(let k=0;k<steps;k++){
-    const t=k/steps,a=authored[i],b=authored[i+1],e=t*t*(3-2*t),o={};
-    for(const key of ['x','y','z','rx','rz','twist','power','lobe'])o[key]=THREE.MathUtils.lerp(a[key]??0,b[key]??0,e);
-    out.push(o);
-  }
-  out.push({...authored[authored.length-1]});return out;
-}
-const functionalStructures=buildBetwixtable({
-  name:'functional-structures',parent:legacyWorkshop,at:new THREE.Vector3(-3.15,GROUND_Y,2.25),padding:.55,
-  build(root,spatial){
-    const stone=new THREE.MeshStandardMaterial({color:0xc8b994,roughness:.86,metalness:.03,flatShading:false});
-    const brass=new THREE.MeshStandardMaterial({color:0x9b7945,roughness:.48,metalness:.52,flatShading:false});
-    const dark=new THREE.MeshStandardMaterial({color:0x55575a,roughness:.58,metalness:.36,flatShading:false});
-
-    // 1: civic tower. Five authored sections; everything between them is interpolation.
-    const towerStations=interpolateStations([
-      {x:-1.45,y:.00,z:.25,rx:.62,rz:.62,twist:0,power:5,lobe:.02},
-      {x:-1.45,y:.55,z:.25,rx:.50,rz:.50,twist:.05,power:5,lobe:.03},
-      {x:-1.45,y:1.15,z:.25,rx:.56,rz:.56,twist:.13,power:3.4,lobe:.08},
-      {x:-1.45,y:1.78,z:.25,rx:.31,rz:.31,twist:.28,power:2.4,lobe:.12},
-      {x:-1.45,y:2.38,z:.25,rx:.055,rz:.055,twist:.42,power:2,lobe:0}
-    ],8);
-    root.add(buildSectionLoft(towerStations,{sides:20,material:stone,name:'functional-structures:tower'}));
-
-    // 2: lighthugger-ish hull. Cross sections run horizontally; rotate loft axis into X.
-    const hullStations=interpolateStations([
-      {x:0,y:-1.48,z:0,rx:.05,rz:.05,twist:0,power:2,lobe:0},
-      {x:0,y:-1.05,z:0,rx:.28,rz:.43,twist:0,power:2.5,lobe:.06},
-      {x:0,y:-.35,z:0,rx:.48,rz:.62,twist:.08,power:4.5,lobe:.10},
-      {x:0,y:.42,z:0,rx:.42,rz:.55,twist:-.05,power:5.5,lobe:.04},
-      {x:0,y:1.15,z:0,rx:.24,rz:.34,twist:.04,power:3,lobe:.03},
-      {x:0,y:1.52,z:0,rx:.035,rz:.035,twist:0,power:2,lobe:0}
-    ],8);
-    const hull=buildSectionLoft(hullStations,{sides:20,material:dark,name:'functional-structures:hull'});
-    hull.rotation.z=Math.PI/2;hull.position.set(.45,1.08,.28);root.add(hull);
-
-    // 3: inhabited spire: authored sections intentionally change topology-read without primitives.
-    const spireStations=interpolateStations([
-      {x:1.35,y:0,z:-.75,rx:.55,rz:.42,twist:0,power:7,lobe:.03},
-      {x:1.35,y:.42,z:-.75,rx:.43,rz:.34,twist:.18,power:7,lobe:.05},
-      {x:1.35,y:.78,z:-.75,rx:.64,rz:.46,twist:.34,power:4,lobe:.12},
-      {x:1.35,y:1.18,z:-.75,rx:.30,rz:.24,twist:.55,power:3,lobe:.18},
-      {x:1.35,y:1.52,z:-.75,rx:.46,rz:.31,twist:.76,power:2.5,lobe:.10},
-      {x:1.35,y:2.08,z:-.75,rx:.04,rz:.04,twist:1.0,power:2,lobe:0}
-    ],7);
-    root.add(buildSectionLoft(spireStations,{sides:18,material:brass,name:'functional-structures:spire'}));
-
-    root.rotation.set(-.08,.32,0);spatial.fit();
-  }
-});
-globalThis.FunctionalStructures={object:functionalStructures};
 
 
 /* Rendezvous cairn laboratory — disposable transport pressure.
@@ -5227,8 +5224,7 @@ renderer.setAnimationLoop((now)=>{
     cage.rotation.x=Math.sin(now*.00007+phase)*.10;
     cage.rotation.z=Math.sin(now*.000053+phase*1.7)*.055;
     window.vestibuleDirty=true;
-  });  const semanticThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:semantic-snapping-primitives');
-  semanticThoughtform?.userData.animate?.(now);
+  });
   const nepThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:neptunian-caretaker-carrier');
   nepThoughtform?.userData.animate?.(now);
   const graphMindThoughtform=workshopTabletopBetwixtable.getObjectByName('thoughtform:deterministic-self-authoring-graph');
@@ -5245,11 +5241,10 @@ renderer.setAnimationLoop((now)=>{
   updateObserverEye(now);
   updateWorkshopCrucibleOrb(now);
   updateWorldD20(now);
-  updateFunctionD20(now);
 
   updateWorkshop(now);
   if(workshopCrucibleEnabled){
-    workshopTerrain?.updateFunctionalArrival?.(now);
+    workshopTerrain?.updateInitialization?.(now);
     const workshopDt=Math.min(.05,Math.max(.001,(now-workshopBearingLast)/1000));
     if(workshopWater||workshopLava){workshopWater?.update(now);workshopLava?.update(now);updateWorkshopSteam(now,workshopDt)}
     workshopMeteors?.update(now);workshopMeteors?.syncRender?.();
@@ -5858,7 +5853,7 @@ function createTerrainSystem({THREE,scene}){
   const APPARATUS_RADIUS=9.75,APPARATUS_APOTHEM=APPARATUS_RADIUS*Math.cos(Math.PI/8),EDGE_REVEAL=.7,MATERIAL_APOTHEM=APPARATUS_APOTHEM-EDGE_REVEAL;
   const APPARATUS_TOP=-1.1,APPARATUS_DEPTH=5,APPARATUS_BOTTOM=APPARATUS_TOP-APPARATUS_DEPTH,SURFACE_Y=.15;
   const PLANES=[[1,0],[-1,0],[0,1],[0,-1],[SQRT1_2,SQRT1_2],[-SQRT1_2,SQRT1_2],[SQRT1_2,-SQRT1_2],[-SQRT1_2,-SQRT1_2]];
-  const field=new Float32Array(NX*NY*NZ),initial=new Float32Array(field.length),idx=(x,y,z)=>x+NX*(y+NY*z);let seed=1;
+  const field=new Float32Array(NX*NY*NZ),initial=new Float32Array(field.length),idx=(x,y,z)=>x+NX*(y+NY*z);let seed=1,initialization=null;
   const wp=(x,y,z)=>new THREE.Vector3(THREE.MathUtils.lerp(MIN.x,MAX.x,x/(NX-1)),THREE.MathUtils.lerp(MIN.y,MAX.y,y/(NY-1)),THREE.MathUtils.lerp(MIN.z,MAX.z,z/(NZ-1)));
   const octagonDistance=(x,z)=>Math.max(Math.abs(x),Math.abs(z),(Math.abs(x)+Math.abs(z))/Math.SQRT2);
   const insideMaterial=(x,z)=>octagonDistance(x,z)<=MATERIAL_APOTHEM+1e-6,insideApparatus=(x,z,pad=0)=>octagonDistance(x,z)<=APPARATUS_APOTHEM+pad;
@@ -5887,98 +5882,6 @@ function createTerrainSystem({THREE,scene}){
     return h;
   }
   function synthesize(nextSeed=seed){seed=nextSeed|0;for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);field[idx(x,y,z)]=terrainSeedHeight(p.x,p.z)-p.y;}initial.set(field);}
-  // Functional-biome genesis: bounded heterogeneous functions own virgin terrain
-  // for five seconds, then surrender authority to Crucible's ordinary mutable field.
-  const FUNCTIONAL_ARRIVAL_MS=5000;
-  let functionalArrival=null;
-  const functionalSites=[
-    [-5.7,-5.0,0,2.15,.7],[0,-5.5,1,2.5,1.9],[5.7,-4.4,2,2.55,2.8],
-    [-5.5,.8,3,2.15,4.1],[0,0,4,2.5,5.0],[5.6,1,5,2.3,6.2],
-    [-4.7,5.9,6,2.55,7.1],[1.2,5.7,7,2.05,8.3],[6.1,5.8,8,2.65,9.4]
-  ];
-  function functionalRaw(kind,x,z,p){
-    const r=Math.hypot(x,z),a=Math.atan2(z,x);
-    if(kind===0)return .62*Math.sin(x*1.45+p)+.22*Math.sin(x*.58+z*.31);
-    if(kind===1)return -.9*Math.exp(-r*r*.22)+.18*Math.cos(r*2.4);
-    if(kind===2)return .62*Math.sin(x*.72+z*1.08+.55*Math.sin(z*.7+p));
-    if(kind===3){const q=.62*Math.sin(r*.82+p);return Math.round(q*4)/4}
-    if(kind===4)return .78*Math.exp(-Math.pow(r-2.15,2)*1.15)-.82*Math.exp(-r*r*.38);
-    if(kind===5)return .58*Math.cos(x*.88+p)*Math.cos(z*.76-p*.3);
-    if(kind===6){const path=z-.72*Math.sin(x*.72+p);return -.92*Math.exp(-path*path*.7)+.18*Math.sin(x*.8)}
-    if(kind===7)return .48*Math.sin(r*1.65+p)+.2*Math.cos(a*5+r*.45);
-    return .95*Math.exp(-r*r*.32)+.24*Math.sin(a*6+p)*Math.exp(-r*.35);
-  }
-  function functionalHeight(x,z){
-    let a=null,b=null;
-    for(const site of functionalSites){const d=Math.hypot(x-site[0],z-site[1]);if(!a||d<a.d){b=a;a={site,d}}else if(!b||d<b.d)b={site,d}}
-    if(!a)return SURFACE_Y;
-    // Voronoi seam is exactly zero displacement. Interior rapidly regains full authority.
-    const seam=Math.max(0,(b?.d??a.d)-a.d),edge=THREE.MathUtils.smoothstep(seam,0,.9);
-    const [sx,sz,kind,amp,phase]=a.site;
-    return SURFACE_Y+amp*functionalRaw(kind,x-sx,z-sz,phase)*edge;
-  }
-  // Progressive realization under a tiny per-frame work budget. The virgin
-  // function is sampled once. A fine radial front commits scalar-field columns at
-  // final height; only terrain chunks touched by newly born columns are remeshed.
-  // Support is intentionally deferred: interaction is locked until genesis completes.
-  let functionalTarget=null,functionalColumns=null,functionalOrder=null;
-  function sampleFunctionalTarget(){
-    functionalTarget=new Float32Array(field.length);
-    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);functionalTarget[idx(x,y,z)]=functionalHeight(p.x,p.z)-p.y}
-  }
-  function writeFlatFunctional(){
-    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);field[idx(x,y,z)]=SURFACE_Y-p.y}
-  }
-  function buildFunctionalOrder(){
-    const mx=(NX-1)*.5,mz=(NZ-1)*.5,maxD=Math.hypot(mx,mz)||1,out=[];
-    for(let z=0;z<NZ;z++)for(let x=0;x<NX;x++)out.push({x,z,d:Math.hypot(x-mx,z-mz)/maxD});
-    out.sort((a,b)=>a.d-b.d||a.z-b.z||a.x-b.x);return out;
-  }
-  function commitFunctionalColumn(x,z,dirtyChunks){
-    for(let y=0;y<NY;y++)field[idx(x,y,z)]=functionalTarget[idx(x,y,z)];
-    // A scalar column can affect the cells immediately to its left/up too.
-    for(const dx of [-1,0])for(const dz of [-1,0]){
-      const cellX=x+dx,cellZ=z+dz;if(cellX<0||cellZ<0||cellX>=NX-1||cellZ>=NZ-1)continue;
-      const cx=Math.min(CX-1,Math.floor(cellX/CHUNK)),cz=Math.min(CZ-1,Math.floor(cellZ/CHUNK));
-      dirtyChunks.add(cx+CX*cz);
-    }
-  }
-  function startFunctionalArrival(now=performance.now()){
-    sampleFunctionalTarget();writeFlatFunctional();
-    functionalColumns=new Uint8Array(NX*NZ);functionalOrder=buildFunctionalOrder();
-    functionalArrival={start:now,progress:0,cursor:0,committed:0,total:NX*NZ,active:true};
-    rebuild();rebuildSupport();return functionalArrival;
-  }
-  function updateFunctionalArrival(now=performance.now()){
-    if(!functionalArrival?.active)return false;
-    const frameStart=performance.now(),budgetMs=2.25;
-    const p=THREE.MathUtils.clamp((now-functionalArrival.start)/FUNCTIONAL_ARRIVAL_MS,0,1);
-    functionalArrival.progress=p;
-    // Time defines how far reality is allowed to have propagated. Budget defines how
-    // much of that eligible frontier this frame may actually become geometry.
-    const eligible=Math.min(functionalOrder.length,Math.ceil(p*functionalOrder.length));
-    const dirty=new Set();let changed=false;
-    while(functionalArrival.cursor<eligible){
-      const c=functionalOrder[functionalArrival.cursor],k=c.x+NX*c.z;
-      if(!functionalColumns[k]){commitFunctionalColumn(c.x,c.z,dirty);functionalColumns[k]=1;functionalArrival.committed++;changed=true}
-      functionalArrival.cursor++;
-      // Amortize polygonization too: flush a small dirty set before checking budget.
-      if(dirty.size>=2){
-        for(const ci of dirty)rebuildChunk(chunks[ci]);dirty.clear();
-        if(performance.now()-frameStart>=budgetMs)break;
-      }
-    }
-    for(const ci of dirty)rebuildChunk(chunks[ci]);
-    // If a slow device falls behind the nominal five-second front, finish at the same
-    // bounded rate rather than hitching. "Five seconds" is the target, smoothness wins.
-    if(p>=1&&functionalArrival.cursor<functionalOrder.length)return changed;
-    if(functionalArrival.cursor>=functionalOrder.length){
-      field.set(functionalTarget);rebuild();rebuildSupport();initial.set(field);
-      functionalArrival.active=false;functionalTarget=null;functionalColumns=null;functionalOrder=null;
-    }
-    return changed;
-  }
-  const functionalLocked=()=>!!functionalArrival?.active;
   synthesize(seed);
   const material=new THREE.MeshStandardMaterial({color:0x785846,roughness:.96,metalness:.02,flatShading:true,side:THREE.DoubleSide});
   const CHUNK=10,CX=Math.ceil((NX-1)/CHUNK),CZ=Math.ceil((NZ-1)/CHUNK),chunks=[],mesh=new THREE.Group();mesh.name="deformable-world-substance";(globalThis.__workshopTerrainOwner||scene).add(mesh);
@@ -6053,29 +5956,29 @@ function createTerrainSystem({THREE,scene}){
   function worldBedHeight(x,z){if(!insideApparatus(x,z))return-Infinity;const terrainY=terrainHeight(x,z);return Number.isFinite(terrainY)?terrainY:APPARATUS_BOTTOM;}
 
 
-  function raise(center,{radius=3.2,height=2.2}={}){
-    if(functionalLocked())return{locked:true,reason:"functional-biomes-materializing"};
+  function raise(center,{
+    if(initializationLocked())return{locked:true,reason:"terrain-initializing"};radius=3.2,height=2.2}={}){
     const r=Math.max(.3,radius),h=Math.max(.04,height),ix0=Math.max(1,Math.floor((center.x-r-MIN.x)/(MAX.x-MIN.x)*(NX-1))-1),ix1=Math.min(NX-2,Math.ceil((center.x+r-MIN.x)/(MAX.x-MIN.x)*(NX-1))+1),iz0=Math.max(1,Math.floor((center.z-r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))-1),iz1=Math.min(NZ-2,Math.ceil((center.z+r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))+1);
     for(let z=iz0;z<=iz1;z++)for(let x=ix0;x<=ix1;x++){const p=wp(x,0,z),radial=Math.hypot(p.x-center.x,p.z-center.z);if(radial>=r)continue;const w=1-radial/r,delta=h*w*w*(3-2*w);for(let y=1;y<NY-1;y++)field[idx(x,y,z)]+=delta;}
     const dirty={x0:ix0,x1:ix1,z0:iz0,z1:iz1};rebuild(dirty);rebuildSupport(dirty);return{radius:r,height:h};
   }
 
-  function lower(center,{radius=3.2,depth=2.2}={}){
-    if(functionalLocked())return{locked:true,reason:"functional-biomes-materializing"};
+  function lower(center,{
+    if(initializationLocked())return{locked:true,reason:"terrain-initializing"};radius=3.2,depth=2.2}={}){
     const r=Math.max(.3,radius),d=Math.max(.04,depth),ix0=Math.max(1,Math.floor((center.x-r-MIN.x)/(MAX.x-MIN.x)*(NX-1))-1),ix1=Math.min(NX-2,Math.ceil((center.x+r-MIN.x)/(MAX.x-MIN.x)*(NX-1))+1),iz0=Math.max(1,Math.floor((center.z-r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))-1),iz1=Math.min(NZ-2,Math.ceil((center.z+r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))+1);
     for(let z=iz0;z<=iz1;z++)for(let x=ix0;x<=ix1;x++){const p=wp(x,0,z),radial=Math.hypot(p.x-center.x,p.z-center.z);if(radial>=r)continue;const w=1-radial/r,delta=d*w*w*(3-2*w);for(let y=1;y<NY-1;y++)field[idx(x,y,z)]-=delta;}
     const dirty={x0:ix0,x1:ix1,z0:iz0,z1:iz1};rebuild(dirty);rebuildSupport(dirty);return{radius:r,depth:d};
   }
 
-  function excavate(center,{radius=.62,depth=.34}={}){
-    if(functionalLocked())return{locked:true,reason:"functional-biomes-materializing"};
+  function excavate(center,{
+    if(initializationLocked())return{locked:true,reason:"terrain-initializing"};radius=.62,depth=.34}={}){
     const r=Math.max(.3,radius),d=Math.max(.04,depth),ix0=Math.max(1,Math.floor((center.x-r-MIN.x)/(MAX.x-MIN.x)*(NX-1))-1),ix1=Math.min(NX-2,Math.ceil((center.x+r-MIN.x)/(MAX.x-MIN.x)*(NX-1))+1),iz0=Math.max(1,Math.floor((center.z-r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))-1),iz1=Math.min(NZ-2,Math.ceil((center.z+r-MIN.z)/(MAX.z-MIN.z)*(NZ-1))+1);
     for(let z=iz0;z<=iz1;z++)for(let x=ix0;x<=ix1;x++){const p=wp(x,0,z),radial=Math.hypot(p.x-center.x,p.z-center.z);if(radial>=r)continue;const w=1-radial/r,delta=d*w*w;for(let y=1;y<NY-1;y++)field[idx(x,y,z)]-=delta;}
     const dirty={x0:ix0,x1:ix1,z0:iz0,z1:iz1};rebuild(dirty);rebuildSupport(dirty);return{radius:r,depth:d};
   }
 
-  function impact(center,{magnitude=1}={}){
-    if(functionalLocked())return{locked:true,reason:"functional-biomes-materializing"};
+  function impact(center,{
+    if(initializationLocked())return{locked:true,reason:"terrain-initializing"};magnitude=1}={}){
     const e=Math.max(.02,magnitude),radius=.72+.62*Math.sqrt(e),depth=.16+.72*Math.pow(e,.82),rim=.035+.16*Math.pow(e,.72),peakStrength=e>=.72?(.035+.13*Math.pow((e-.72)/.83,.72)):0,peakRadius=radius*.24;
     const ix0=Math.max(1,Math.floor((center.x-radius-MIN.x)/(MAX.x-MIN.x)*(NX-1))-1),ix1=Math.min(NX-2,Math.ceil((center.x+radius-MIN.x)/(MAX.x-MIN.x)*(NX-1))+1);
     const iz0=Math.max(1,Math.floor((center.z-radius-MIN.z)/(MAX.z-MIN.z)*(NZ-1))-1),iz1=Math.min(NZ-2,Math.ceil((center.z+radius-MIN.z)/(MAX.z-MIN.z)*(NZ-1))+1);
@@ -6090,6 +5993,78 @@ function createTerrainSystem({THREE,scene}){
     const dirty={x0:ix0,x1:ix1,z0:iz0,z1:iz1};rebuild(dirty);rebuildSupport(dirty);
     return{magnitude:e,radius,depth,rim,centralUplift:peakStrength};
   }
+
+  // Functional-biome genesis is an initialization treatment, not a second terrain type.
+  // Virgin functions are sampled once, then compiled into ordinary mutable terrain under
+  // a bounded per-frame realization budget. Once baked, the functions surrender authority.
+  const FUNCTIONAL_SITES=[
+    [-6.6,-5.8,"dunes"],[-.5,-6.2,"basin"],[5.8,-5.2,"ridges"],
+    [-6.3,.1,"terraces"],[0,0,"crater"],[6.1,.4,"knolls"],
+    [-5.5,5.8,"canyon"],[.4,6.1,"waves"],[5.9,5.5,"spire"]
+  ];
+  function functionalShape(kind,x,z,sx,sz){
+    const dx=x-sx,dz=z-sz,r=Math.hypot(dx,dz);
+    if(kind==="dunes")return 1.15*Math.sin(dx*1.18+Math.sin(dz*.48)*1.3)*Math.exp(-r*.045);
+    if(kind==="basin")return -2.15*Math.exp(-(r*r)/13)+.28*Math.sin(dx*.72)*Math.cos(dz*.54);
+    if(kind==="ridges")return 1.65*Math.pow(Math.abs(Math.sin(dx*.66+dz*.21)),2.6)*Math.exp(-r*.055)-.22;
+    if(kind==="terraces")return .42*Math.floor(4*Math.max(0,1-r/7))/1.0+.18*Math.sin(dz*.7);
+    if(kind==="crater")return -1.75*Math.exp(-(r*r)/5.2)+1.05*Math.exp(-Math.pow(r-3.0,2)/.42);
+    if(kind==="knolls")return 1.45*Math.exp(-(r*r)/5.5)+.72*Math.exp(-((dx-2.0)**2+(dz+1.3)**2)/2.4);
+    if(kind==="canyon")return -1.7*Math.exp(-Math.pow(dx*.78+Math.sin(dz*.5)*1.25,2)/1.15)+.16*Math.sin(dz*.8);
+    if(kind==="waves")return .95*Math.sin(r*1.35)*Math.exp(-r*.12);
+    if(kind==="spire")return 2.75*Math.exp(-(r*r)/2.25)-.35*Math.exp(-Math.pow(r-3.1,2)/1.1);
+    return 0;
+  }
+  function functionalBiomeHeight(x,z){
+    let first=null,second=null;
+    for(const site of FUNCTIONAL_SITES){
+      const d=Math.hypot(x-site[0],z-site[1]),entry={site,d};
+      if(!first||d<first.d){second=first;first=entry}else if(!second||d<second.d)second=entry;
+    }
+    // Exact Voronoi seam is the common neutral surface. Interior regains its category
+    // quickly; neighboring generators need no knowledge of one another.
+    const gap=(second?.d??first.d)-first.d,edge=THREE.MathUtils.smoothstep(gap,0,.95);
+    return SURFACE_Y+edge*functionalShape(first.site[2],x,z,first.site[0],first.site[1]);
+  }
+  function initializeFunctionalBiomes({duration=5000,budgetMs=2.25,now=performance.now()}={}){
+    const target=new Float32Array(field.length),columns=new Uint8Array(NX*NZ),order=[];
+    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);target[idx(x,y,z)]=functionalBiomeHeight(p.x,p.z)-p.y;field[idx(x,y,z)]=SURFACE_Y-p.y}
+    const mx=(NX-1)*.5,mz=(NZ-1)*.5,maxD=Math.hypot(mx,mz)||1;
+    for(let z=0;z<NZ;z++)for(let x=0;x<NX;x++)order.push({x,z,d:Math.hypot(x-mx,z-mz)/maxD});
+    order.sort((a,b)=>a.d-b.d||a.z-b.z||a.x-b.x);
+    initialization={kind:"functional-biomes",start:now,duration,budgetMs,target,columns,order,cursor:0,progress:0,active:true};
+    rebuild();rebuildSupport();return inspectInitialization();
+  }
+  function inspectInitialization(){return initialization?{kind:initialization.kind,active:initialization.active,progress:initialization.progress,committed:initialization.cursor,total:initialization.order?.length??0}:null}
+  function updateInitialization(now=performance.now()){
+    if(!initialization?.active)return false;
+    const init=initialization,frameStart=performance.now(),p=THREE.MathUtils.clamp((now-init.start)/init.duration,0,1);
+    init.progress=p;
+    const eligible=Math.min(init.order.length,Math.ceil(p*init.order.length)),dirty=new Set();let changed=false;
+    while(init.cursor<eligible){
+      const c=init.order[init.cursor],k=c.x+NX*c.z;
+      if(!init.columns[k]){
+        for(let y=0;y<NY;y++)field[idx(c.x,y,c.z)]=init.target[idx(c.x,y,c.z)];
+        init.columns[k]=1;changed=true;
+        for(const dx of [-1,0])for(const dz of [-1,0]){
+          const cellX=c.x+dx,cellZ=c.z+dz;if(cellX<0||cellZ<0||cellX>=NX-1||cellZ>=NZ-1)continue;
+          dirty.add(Math.min(CX-1,Math.floor(cellX/CHUNK))+CX*Math.min(CZ-1,Math.floor(cellZ/CHUNK)));
+        }
+      }
+      init.cursor++;
+      if(dirty.size>=2){for(const ci of dirty)rebuildChunk(chunks[ci]);dirty.clear();if(performance.now()-frameStart>=init.budgetMs)break}
+    }
+    for(const ci of dirty)rebuildChunk(chunks[ci]);
+    // Smoothness outranks the nominal duration: a slow device finishes late rather than hitching.
+    if(p>=1&&init.cursor<init.order.length)return changed;
+    if(init.cursor>=init.order.length){
+      field.set(init.target);rebuild();rebuildSupport();initial.set(field);init.progress=1;init.active=false;
+      init.target=null;init.columns=null;init.order=null;
+    }
+    return changed;
+  }
+  const initializationLocked=()=>!!initialization?.active;
+
   function snapshot(){return{seed,field:field.slice()}}
   function restore(state){if(!state?.field||state.field.length!==field.length)throw new Error("Invalid terrain snapshot");seed=state.seed|0;field.set(state.field);rebuild();rebuildSupport();return seed}
   function reset(){field.set(initial);rebuild();rebuildSupport();}
@@ -6104,7 +6079,7 @@ function createTerrainSystem({THREE,scene}){
   }
   function segmentApparatusHit(a,b){let enter=0,exit=1,normal=null;const d=b.clone().sub(a),slabs=PLANES.map(([nx,nz])=>({n:new THREE.Vector3(nx,0,nz),c:APPARATUS_APOTHEM}));slabs.push({n:new THREE.Vector3(0,1,0),c:APPARATUS_TOP},{n:new THREE.Vector3(0,-1,0),c:-APPARATUS_BOTTOM});for(const s of slabs){const da=s.n.dot(a)-s.c,dd=s.n.dot(d);if(Math.abs(dd)<1e-8){if(da>0)return null;continue}const t=-da/dd;if(dd<0){if(t>enter){enter=t;normal=s.n}}else exit=Math.min(exit,t);if(enter>exit)return null}return enter>=0&&enter<=1&&normal?{t:enter,point:a.clone().lerp(b,enter),normal:normal.clone()}:null;}
   rebuild();rebuildSupport();
-  return{mesh,apparatus,field,rebuild,impact,excavate,raise,lower,snapshot,restore,reset,loadLandCandidate,rebuildAll,startFunctionalArrival,updateFunctionalArrival,functionalLocked,supportY,terrainY,exactSupportY,groundHeight,groundHeightExact,worldBedHeight,bearingTerrainHeight,terrainHeight,insideMaterial,insideApparatus,materialBoundary,collideSphere,collideBearingState,segmentApparatusHit,belowPlinthOcclusion,occludeBelowPlinth,landCandidate:()=>({...LAND_CANDIDATE_A}),inspect:()=>({grid:[NX,NY,NZ],volume:{min:[MIN.x,MIN.y,MIN.z],max:[MAX.x,MAX.y,MAX.z],spacing:[(MAX.x-MIN.x)/(NX-1),(MAX.y-MIN.y)/(NY-1),(MAX.z-MIN.z)/(NZ-1)]},chunks:[CX,CZ],triangles:chunks.reduce((n,c)=>n+c.triangles,0),seed,apparatus:{radius:APPARATUS_RADIUS,top:APPARATUS_TOP,bottom:APPARATUS_BOTTOM},materialApothem:MATERIAL_APOTHEM,functionalArrival:functionalArrival?{active:functionalArrival.active,progress:functionalArrival.progress}:null})};
+  return{mesh,apparatus,field,rebuild,impact,excavate,raise,lower,snapshot,restore,reset,loadLandCandidate,initializeFunctionalBiomes,updateInitialization,inspectInitialization,rebuildAll,supportY,terrainY,exactSupportY,groundHeight,groundHeightExact,worldBedHeight,bearingTerrainHeight,terrainHeight,insideMaterial,insideApparatus,materialBoundary,collideSphere,collideBearingState,segmentApparatusHit,belowPlinthOcclusion,occludeBelowPlinth,landCandidate:()=>({...LAND_CANDIDATE_A}),inspect:()=>({grid:[NX,NY,NZ],volume:{min:[MIN.x,MIN.y,MIN.z],max:[MAX.x,MAX.y,MAX.z],spacing:[(MAX.x-MIN.x)/(NX-1),(MAX.y-MIN.y)/(NY-1),(MAX.z-MIN.z)/(NZ-1)]},chunks:[CX,CZ],triangles:chunks.reduce((n,c)=>n+c.triangles,0),seed,apparatus:{radius:APPARATUS_RADIUS,top:APPARATUS_TOP,bottom:APPARATUS_BOTTOM},materialApothem:MATERIAL_APOTHEM})};
 }
 // Seed-addressed recipe synthesis for Terrain Genesis.
 // This lives beside the preserved authored recipes: one integer determines both
