@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="3536da3d" data-repository-sha="3536da3d40eaffab30e35ce08efc2c286ddbb993"><script>globalThis.__REPOSITORY_SHA__="3536da3d40eaffab30e35ce08efc2c286ddbb993";globalThis.__REPOSITORY_BUILD__="3536da3d";</script><script>(()=>{
+<body data-repository-build="62d3efbd" data-repository-sha="62d3efbd31c7c0e03b6cd55147774e284ff3ba69"><script>globalThis.__REPOSITORY_SHA__="62d3efbd31c7c0e03b6cd55147774e284ff3ba69";globalThis.__REPOSITORY_BUILD__="62d3efbd";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2742,9 +2742,13 @@ const observerVessel=buildBetwixtable({
     const cartridgeRadius=1.72,ringRadius=.66,tube=.055,zAxis=new THREE.Vector3(0,0,1);
     const cage=buildCardinalCage({parent:root,name:'observer-vessel:cartridge',nodeRadius:cartridgeRadius,ringRadius,tube});
     const nodes=cage.nodes;
-    // Receiver is the same ring standard displaced outward for payload clearance.
-    // +X is deliberately absent: the sixth direction is the insertion mouth.
-    const receiver=buildCardinalCage({parent:root,name:'observer-vessel:receiver',nodeRadius:cartridgeRadius+.18,ringRadius,tube,omitNode:'xp'});
+    // A docked cartridge may gimbal arbitrarily. Size the receiver from its swept envelope:
+    // outer dock center + the shared port radius + a small non-contact clearance.
+    const cartridgeSweptRadius=cartridgeRadius+ringRadius;
+    const receiverClearance=.18;
+    const receiverRadius=cartridgeSweptRadius+receiverClearance;
+    // Same-size rings remain traversable ports; only their distance from center grows.
+    const receiver=buildCardinalCage({parent:root,name:'observer-vessel:receiver',nodeRadius:receiverRadius,ringRadius,tube,omitNode:'xp'});
     receiver.shell.userData.molecule={kind:'asymmetric-6-node-receiver',centerExpects:'7-node-rotor-cartridge',mouth:'xp'};
     const occupied=[nodes.xp,nodes.yp];
     occupied.forEach((p,i)=>{const axis=p.clone().normalize(),agent=makeObserverAgent({name:'observer-vessel:pilot:'+i,parent:root,at:p.clone(),betwixtable:false});agent.node.quaternion.setFromUnitVectors(zAxis,axis);});
