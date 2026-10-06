@@ -5917,18 +5917,56 @@ function createTerrainSystem({THREE,scene}){
     const [sx,sz,kind,amp,phase]=a.site;
     return SURFACE_Y+amp*functionalRaw(kind,x-sx,z-sz,phase)*edge;
   }
-  function writeFunctional(progress){
-    const t=progress*progress*(3-2*progress);
-    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z),h=THREE.MathUtils.lerp(SURFACE_Y,functionalHeight(p.x,p.z),t);field[idx(x,y,z)]=h-p.y}
+  // Progressive realization, not progressive recomputation. The final virgin
+  // function is sampled once. During the five-second arrival, terrain chunks cross
+  // a deterministic expanding front exactly once and are committed at final height.
+  // Already-realized chunks are never remeshed merely because time advanced.
+  let functionalTarget=null,functionalCommitted=null;
+  function sampleFunctionalTarget(){
+    functionalTarget=new Float32Array(field.length);
+    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);functionalTarget[idx(x,y,z)]=functionalHeight(p.x,p.z)-p.y}
   }
-  function startFunctionalArrival(now=performance.now()){functionalArrival={start:now,progress:0,step:-1,active:true};writeFunctional(0);rebuild();rebuildSupport();return functionalArrival}
+  function writeFlatFunctional(){
+    for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);field[idx(x,y,z)]=SURFACE_Y-p.y}
+  }
+  function commitFunctionalChunk(cx,cz){
+    const x0=cx*CHUNK,x1=Math.min(NX-1,x0+CHUNK),z0=cz*CHUNK,z1=Math.min(NZ-1,z0+CHUNK);
+    // One-cell halo makes the final seam between a born and unborn chunk geometrically
+    // honest without requiring previously born neighbors to be rebuilt.
+    const hx0=Math.max(0,x0-1),hx1=Math.min(NX-1,x1+1),hz0=Math.max(0,z0-1),hz1=Math.min(NZ-1,z1+1);
+    for(let z=hz0;z<=hz1;z++)for(let y=0;y<NY;y++)for(let x=hx0;x<=hx1;x++)field[idx(x,y,z)]=functionalTarget[idx(x,y,z)];
+    rebuildChunk(chunks[cx+CX*cz]);
+    return{x0,x1,z0,z1};
+  }
+  function startFunctionalArrival(now=performance.now()){
+    sampleFunctionalTarget();writeFlatFunctional();
+    functionalCommitted=new Uint8Array(CX*CZ);
+    functionalArrival={start:now,progress:0,committed:0,total:CX*CZ,active:true};
+    rebuild();rebuildSupport();
+    return functionalArrival;
+  }
   function updateFunctionalArrival(now=performance.now()){
     if(!functionalArrival?.active)return false;
-    const p=THREE.MathUtils.clamp((now-functionalArrival.start)/FUNCTIONAL_ARRIVAL_MS,0,1),step=Math.floor(p*100);
-    if(step===functionalArrival.step&&p<1)return false;
-    functionalArrival.step=step;functionalArrival.progress=p;writeFunctional(p);rebuild();rebuildSupport();
-    if(p>=1){functionalArrival.active=false;initial.set(field)}
-    return true;
+    const p=THREE.MathUtils.clamp((now-functionalArrival.start)/FUNCTIONAL_ARRIVAL_MS,0,1);
+    functionalArrival.progress=p;
+    // A radial birth front from the specimen center. Distance is normalized to the
+    // farthest chunk center, so the complete terrain is guaranteed by t=5s.
+    const centers=[],mx=(CX-1)*.5,mz=(CZ-1)*.5,maxD=Math.hypot(mx,mz)||1;
+    for(let cz=0;cz<CZ;cz++)for(let cx=0;cx<CX;cx++)centers.push({cx,cz,d:Math.hypot(cx-mx,cz-mz)/maxD});
+    centers.sort((a,b)=>a.d-b.d);
+    let changed=false;
+    for(const c of centers){
+      const k=c.cx+CX*c.cz;if(functionalCommitted[k]||c.d>p)continue;
+      commitFunctionalChunk(c.cx,c.cz);functionalCommitted[k]=1;functionalArrival.committed++;changed=true;
+    }
+    if(changed)rebuildSupport();
+    if(p>=1){
+      // Final authoritative bake. Target already contains the exact field; this copy
+      // also removes any temporary halo ordering ambiguity before mutation is enabled.
+      field.set(functionalTarget);rebuild();rebuildSupport();initial.set(field);
+      functionalArrival.active=false;functionalTarget=null;functionalCommitted=null;
+    }
+    return changed;
   }
   const functionalLocked=()=>!!functionalArrival?.active;
   synthesize(seed);
