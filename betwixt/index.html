@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="ff656d50" data-repository-sha="ff656d500b724a1f7c0cf5cf22980e608b0467de"><script>globalThis.__REPOSITORY_SHA__="ff656d500b724a1f7c0cf5cf22980e608b0467de";globalThis.__REPOSITORY_BUILD__="ff656d50";</script><script>(()=>{
+<body data-repository-build="34dd8b2b" data-repository-sha="34dd8b2b8c5144ae9a1311af2acb4e151b658f67"><script>globalThis.__REPOSITORY_SHA__="34dd8b2b8c5144ae9a1311af2acb4e151b658f67";globalThis.__REPOSITORY_BUILD__="34dd8b2b";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3460,6 +3460,19 @@ function updateRocketChase(now){
 function updateWorldD20(now){if(worldD20Animators.length){for(const animate of worldD20Animators)animate(now);}updateRocketChase(now);window.vestibuleDirty=true;}
 
 
+/* Functional Terrain v0 — inspect the three maps independently, then their composition. */
+let functionalTerrainV0=null;
+const functionalTerrainV0Table=buildBetwixtable({
+  name:'functional-terrain-v0',parent:legacyWorkshop,
+  at:new THREE.Vector3(-7.2,GROUND_Y+.08,5.8),padding:.42,
+  interact:()=>{functionalTerrainV0?.next();window.vestibuleDirty=true},
+  build(root){
+    functionalTerrainV0=createFunctionalTerrainV0({THREE,size:8.4,resolution:45,seed:741});
+    root.add(functionalTerrainV0.root);
+  }
+});
+globalThis.FunctionalTerrainV0=()=>({mode:functionalTerrainV0?.mode(),sample:functionalTerrainV0?.sample(0,0)});
+
 /* Rendezvous cairn laboratory — disposable transport pressure.
    This is intentionally a physical Betwixtable rather than a networking framework.
    The browser owns ntfy transport; the reconstructed scar log owns apparent shared state. */
@@ -6313,94 +6326,6 @@ function createBearingSystem({world,components,THREE,scene,terrain,locus,impacts
   return{entity,mesh,spawnBatch,spawnOne,update,applyField,applyImpact,sampleDensity,snapshot,clear,restore,dispose:()=>unsubscribe?.(),inspect:()=>({kind:"foundry-bearing-batch",count,maxBearings,radius:BALL_R,rendered:mesh.count,liquidCoupling:liquidFields.length,relativeDensity:BEARING_RELATIVE_DENSITY,probe:{...probe}})};
 }
 
-// Three-faction Crucible war: deterministic strategy simulation over ordinary terrain.
-// Each faction owns a genuinely different expansion policy; visuals expose state rather than script a scene.
-function createFactionWarSystem({THREE,terrain,owner,seed=741}){
-  const root=new THREE.Group();root.name="war:three-factions";owner.add(root);
-  let state=seed>>>0,last=0,acc=0,winner=null,warStarted=false;
-  const rand=()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/4294967296);
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const ground=(x,z)=>terrain.groundHeight?.(x,z)??0;
-  const factions=[
-    {id:"bastion",name:"Bastion",color:0xd65a32,start:new THREE.Vector2(-8.2,-6.3),policy:"fortify",speed:.62,max:11},
-    {id:"murmuration",name:"Murmuration",color:0x4b79d8,start:new THREE.Vector2(8.3,-5.8),policy:"scatter",speed:.88,max:17},
-    {id:"delvers",name:"Delvers",color:0x8b62b7,start:new THREE.Vector2(.3,8.8),policy:"burrow",speed:.52,max:8}
-  ];
-  const unitGeo=new THREE.ConeGeometry(.13,.34,5),postGeo=new THREE.CylinderGeometry(.07,.09,.42,6),shotGeo=new THREE.SphereGeometry(.045,5,4);
-  const units=[],posts=[],shots=[];
-  const mats=new Map(factions.map(f=>[f.id,new THREE.MeshStandardMaterial({color:f.color,roughness:.62,metalness:.12})]));
-  const darkMats=new Map(factions.map(f=>[f.id,new THREE.MeshStandardMaterial({color:f.color,roughness:.9,metalness:.02})]));
-  const addPost=(f,x,z)=>{
-    if(posts.filter(p=>p.f===f).length>=28)return;
-    const mesh=new THREE.Mesh(postGeo,darkMats.get(f.id));mesh.position.set(x,ground(x,z)+.21,z);mesh.castShadow=true;root.add(mesh);
-    posts.push({f,x,z,mesh});
-  };
-  const spawn=(f,i)=>{
-    const a=(i/f.max-.5)*.9,p=f.start.clone().add(new THREE.Vector2(Math.cos(a),Math.sin(a)).multiplyScalar(.3+.18*(i%3)));
-    const mesh=new THREE.Mesh(unitGeo,mats.get(f.id));mesh.position.set(p.x,ground(p.x,p.y)+.18,p.y);mesh.castShadow=true;root.add(mesh);
-    units.push({f,mesh,p,hp:3,phase:rand()*6.28,target:new THREE.Vector2(),cool:rand()*.8,alive:true,trail:0});
-  };
-  for(const f of factions){addPost(f,f.start.x,f.start.y);for(let i=0;i<f.max;i++)spawn(f,i)}
-  const centerRing=new THREE.Mesh(new THREE.TorusGeometry(.62,.035,8,48),new THREE.MeshStandardMaterial({color:0xc79b3b,roughness:.4,metalness:.55}));
-  centerRing.rotation.x=Math.PI/2;centerRing.position.y=ground(0,0)+.08;root.add(centerRing);
-  function nearestEnemy(u){
-    let best=null,bd=1e9;for(const v of units)if(v.alive&&v.f!==u.f){const d=u.p.distanceToSquared(v.p);if(d<bd){bd=d;best=v}}
-    return bd<2.25?best:null;
-  }
-  function policyTarget(u){
-    const f=u.f,toCenter=u.p.clone().multiplyScalar(-1),d=u.p.length();
-    if(f.policy==="fortify"){
-      // Slow military road: advance in a coherent wedge and periodically harden the supply line.
-      const lane=(units.filter(v=>v.alive&&v.f===f).indexOf(u)%5-2)*.16;
-      const dir=toCenter.normalize(),side=new THREE.Vector2(-dir.y,dir.x);
-      return u.p.clone().add(dir.multiplyScalar(.9)).add(side.multiplyScalar(lane));
-    }
-    if(f.policy==="scatter"){
-      // Fast distributed exploration: scouts fan broadly, then converge as the Crucible becomes near.
-      const radial=toCenter.normalize(),side=new THREE.Vector2(-radial.y,radial.x);
-      const wander=Math.sin(u.phase+performance.now()*.0007)*Math.min(1.7,d*.18);
-      return u.p.clone().add(radial.multiplyScalar(d<3?1.2:.62)).add(side.multiplyScalar(wander));
-    }
-    // Delvers choose terrain-efficient stepping: sample three headings and prefer the flattest inward route.
-    const base=Math.atan2(toCenter.y,toCenter.x);let best=null,bscore=1e9;
-    for(const off of [-.52,0,.52]){const q=u.p.clone().add(new THREE.Vector2(Math.cos(base+off),Math.sin(base+off)).multiplyScalar(.75));const slope=Math.abs(ground(q.x,q.y)-ground(u.p.x,u.p.y));const score=slope*2.8+q.length();if(score<bscore){bscore=score;best=q}}
-    return best;
-  }
-  function fire(u,v){
-    const mesh=new THREE.Mesh(shotGeo,mats.get(u.f.id));mesh.position.copy(u.mesh.position);root.add(mesh);
-    shots.push({mesh,from:u,to:v,t:0,life:.34});
-  }
-  function kill(u){u.alive=false;u.mesh.visible=false}
-  function tick(dt,now){
-    // Terrain owns readiness. No wall-clock guess: war cannot begin until manifestation has actually baked.\n    if(!warStarted){const init=terrain.inspectInitialization?.();if(!init||init.active)return;warStarted=true;last=now;return;}
-    for(const u of units){
-      if(!u.alive)continue;u.cool-=dt;
-      const enemy=nearestEnemy(u);
-      if(enemy&&u.cool<=0){fire(u,enemy);u.cool=.55+rand()*.65}
-      let target=enemy?enemy.p:policyTarget(u),dir=target.clone().sub(u.p),len=dir.length();
-      if(len>.02){dir.multiplyScalar(1/len);let speed=u.f.speed;
-        if(enemy)speed*=.72;
-        // Bastion holds formation; Murmuration slips around contact; Delvers are slow but terrain-insensitive.
-        if(u.f.policy!=="burrow"){const h0=ground(u.p.x,u.p.y),h1=ground(u.p.x+dir.x*.25,u.p.y+dir.y*.25);speed*=clamp(1-Math.abs(h1-h0)*1.7,.28,1)}
-        u.p.addScaledVector(dir,speed*dt);u.p.x=clamp(u.p.x,-9.4,9.4);u.p.y=clamp(u.p.y,-9.4,9.4);
-      }
-      u.mesh.position.set(u.p.x,ground(u.p.x,u.p.y)+.18,u.p.y);u.mesh.rotation.y=Math.atan2(dir.x,dir.y);
-      u.trail+=dt;
-      const spacing=u.f.policy==="fortify"?1.35:u.f.policy==="burrow"?1.8:2.35;
-      if(u.trail>spacing){u.trail=0;const own=posts.filter(p=>p.f===u.f);if(!own.some(p=>u.p.distanceToSquared(new THREE.Vector2(p.x,p.z))<spacing*spacing*.65))addPost(u.f,u.p.x,u.p.y)}
-      if(u.p.length()<.72&&!winner){winner=u.f;centerRing.material=mats.get(u.f.id);centerRing.scale.setScalar(1.18)}
-    }
-    for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.t+=dt;const q=clamp(s.t/s.life,0,1);if(s.to.alive)s.mesh.position.lerpVectors(s.from.mesh.position,s.to.mesh.position,q);if(q>=1){if(s.to.alive){s.to.hp--;if(s.to.hp<=0)kill(s.to)}root.remove(s.mesh);s.mesh.geometry=shotGeo;shots.splice(i,1)}}
-    for(const p of posts)p.mesh.position.y=ground(p.x,p.z)+.21;
-    centerRing.position.y=ground(0,0)+.08;
-  }
-  return{
-    root,
-    update(now){if(!warStarted){tick(0,now);return}if(!last)last=now;const dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;if(acc<.05)return;const step=acc;acc=0;tick(step,now)},
-    inspect(){return{kind:"three-faction-war",started:warStarted,winner:winner?.name??null,factions:factions.map(f=>({id:f.id,name:f.name,policy:f.policy,alive:units.filter(u=>u.alive&&u.f===f).length,posts:posts.filter(p=>p.f===f).length}))}}
-  };
-}
-
 function createWorld(){
   let next=1;
   const alive=new Set(),stores=new Map();
@@ -6411,6 +6336,85 @@ function createWorld(){
   const query=(...parts)=>{if(!parts.length)return [...alive];const smallest=parts.reduce((a,b)=>a.size<=b.size?a:b);return [...smallest.keys()].filter(id=>alive.has(id)&&parts.every(p=>p.has(id)))};
   const destroy=id=>{alive.delete(id);for(const store of stores.values())store.delete(id)};
   return {component,entity,add,remove,query,destroy,alive,stores};
+}
+
+// Functional Terrain v0 — three orthogonal 2D maps compiled into one height surface.
+// This is deliberately literal evidence: tiers, extrusion permission, octagonal jurisdiction.
+function createFunctionalTerrainV0({THREE,size=8.4,resolution=45,seed=741}={}){
+  const root=new THREE.Group();root.name="functional-terrain:v0";
+  let mode=3;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const hash=(x,z,s)=>{
+    const xi=Math.trunc(x),zi=Math.trunc(z);
+    let h=Math.imul(xi+s,374761393)+Math.imul(zi+s*17,668265263);
+    h=Math.imul(h-Math.floor(h/8192)*8192,1274126177);
+    return Math.abs(h%1000003)/1000003;
+  };
+  const smooth=t=>t*t*(3-2*t);
+  function valueNoise(x,z,s,scale){
+    x/=scale;z/=scale;const ix=Math.floor(x),iz=Math.floor(z),tx=smooth(x-ix),tz=smooth(z-iz);
+    const a=hash(ix,iz,s),b=hash(ix+1,iz,s),c=hash(ix,iz+1,s),d=hash(ix+1,iz+1,s);
+    return THREE.MathUtils.lerp(THREE.MathUtils.lerp(a,b,tx),THREE.MathUtils.lerp(c,d,tx),tz);
+  }
+  const fbm=(x,z,s)=>.62*valueNoise(x,z,s,3.8)+.27*valueNoise(x,z,s+17,1.9)+.11*valueNoise(x,z,s+43,.9);
+  const tiers=[-.65,-.12,.48,1.12];
+  const biomeKinds=["dunes","ridges","crater","canyon","knolls","waves","spire","terraces"];
+  const octR=1.72,dx=octR*1.72,dz=octR*1.42;
+  function octCell(x,z){
+    let best=null,bd=1e9;
+    const rz=Math.round(z/dz);
+    for(let j=rz-2;j<=rz+2;j++){
+      const offset=(j&1)*dx*.5,rx=Math.round((x-offset)/dx);
+      for(let i=rx-2;i<=rx+2;i++){
+        const cx=i*dx+offset,cz=j*dz,ax=Math.abs(x-cx),az=Math.abs(z-cz);
+        // regular-ish octagonal metric; distance 1 is the hard jurisdiction boundary
+        const od=Math.max(ax,az,(ax+az)/1.414)/(octR*.78);
+        if(od<bd){bd=od;best={i,j,cx,cz,d:od}}
+      }
+    }
+    const key=((best.i*73856093)^(best.j*19349663)^seed)>>>0;
+    best.kind=biomeKinds[key%biomeKinds.length];return best;
+  }
+  function biome(kind,x,z,cx,cz){
+    const X=x-cx,Z=z-cz,r=Math.hypot(X,Z);
+    if(kind==="dunes")return .52*Math.sin(X*3.0+Math.sin(Z*1.2));
+    if(kind==="ridges")return .78*(Math.abs(Math.sin((X*.72+Z*.34)*2.5))-.42);
+    if(kind==="crater")return -1.05*Math.exp(-r*r/1.0)+.52*Math.exp(-Math.pow(r-1.0,2)/.12);
+    if(kind==="canyon")return -.92*Math.exp(-Math.pow(X*.9+Math.sin(Z*1.8)*.35,2)/.18);
+    if(kind==="knolls")return .88*Math.exp(-r*r/.72)+.36*Math.exp(-((X-.62)**2+(Z+.38)**2)/.22);
+    if(kind==="waves")return .58*Math.sin(r*4.4);
+    if(kind==="spire")return 1.22*Math.exp(-r*r/.26);
+    if(kind==="terraces")return .22*Math.floor(4*Math.max(0,1-r/1.6));
+    return 0;
+  }
+  function sample(x,z){
+    const en=fbm(x,z,seed+101),tier=Math.min(tiers.length-1,Math.floor(en*tiers.length)),E=tiers[tier];
+    const mn=fbm(x,z,seed+911),M=clamp((mn-.28)/.56,0,1);
+    const cell=octCell(x,z),A=cell.d>=1?0:smooth(clamp((1-cell.d)/.24,0,1));
+    const F=biome(cell.kind,x,z,cell.cx,cell.cz);
+    return{E,M,A,F,H:E+M*A*F,tier,kind:cell.kind};
+  }
+  const geo=new THREE.PlaneGeometry(size,size,resolution-1,resolution-1);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,colors=new Float32Array(pos.count*3);
+  const color=new THREE.Color();
+  function paint(){
+    for(let i=0;i<pos.count;i++){
+      const x=pos.getX(i),z=pos.getZ(i),q=sample(x,z);
+      let y=0;
+      if(mode===0){y=q.E;color.setHSL(.12+.12*q.tier,.38,.32+.09*q.tier)}
+      else if(mode===1){y=-.8+q.M*1.6;color.setHSL(.58,.18,.18+.55*q.M)}
+      else if(mode===2){y=.04;color.setHSL(((biomeKinds.indexOf(q.kind)*.117)%1),.52,.42+q.A*.12)}
+      else{y=q.H;color.setHSL(.26-q.E*.025,.34,.28+q.M*.22)}
+      pos.setY(i,y);colors[i*3]=color.r;colors[i*3+1]=color.g;colors[i*3+2]=color.b;
+    }
+    geo.setAttribute("color",new THREE.BufferAttribute(colors,3));pos.needsUpdate=true;geo.attributes.color.needsUpdate=true;geo.computeVertexNormals();
+  }
+  const mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.88,metalness:.02,side:THREE.DoubleSide,flatShading:false});
+  const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(size+.18,.12,size+.18),new THREE.MeshStandardMaterial({color:0x34383a,roughness:.62,metalness:.35}));
+  base.position.y=-.92;root.add(base);
+  paint();
+  return{root,mesh,setMode(n){mode=((n%4)+4)%4;paint();return mode},next(){return this.setMode(mode+1)},mode:()=>mode,sample};
 }
 
 
