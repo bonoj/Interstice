@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="c7cbe92f" data-repository-sha="c7cbe92f943f7cacd43e65fe63a34b3088e77e07"><script>globalThis.__REPOSITORY_SHA__="c7cbe92f943f7cacd43e65fe63a34b3088e77e07";globalThis.__REPOSITORY_BUILD__="c7cbe92f";</script><script>(()=>{
+<body data-repository-build="1fad1349" data-repository-sha="1fad1349dc84f36c58365a110d287999177a4062"><script>globalThis.__REPOSITORY_SHA__="1fad1349dc84f36c58365a110d287999177a4062";globalThis.__REPOSITORY_BUILD__="1fad1349";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1772,7 +1772,8 @@ const placeDefinitions={
   betwixt:{object:betwixtPlace,title:'🌀 BETWIXT'},
   observatory:{object:observatoryPlace,title:'👁️ OBSERVATORY'},
   workshop:{object:legacyWorkshop,title:'🛠️ WORKSHOP'},
-  crucible:{object:cruciblePlace,title:'⚗️ CRUCIBLE'}
+  crucible:{object:cruciblePlace,title:'⚗️ CRUCIBLE'},
+  beyond:{object:beyondPlace,title:'🚪 BEYOND'}
 };
 function setBetwixtTitle(text){
   if(placeTitleEl)placeTitleEl.textContent=text;
@@ -1783,7 +1784,7 @@ function setBetwixtTitle(text){
 function removeBetwixtPortal(){globalThis.RepositoryShell?.removeTool('betwixt-portal')}
 function removePlaceSpells(){
   const shell=globalThis.RepositoryShell;if(!shell)return;
-  for(const id of ['observatory-place','workshop-place','crucible-container'])shell.removeTool(id);
+  for(const id of ['observatory-place','workshop-place','crucible-container','beyond-place'])shell.removeTool(id);
 }
 function installBetwixtPortal(){
   const shell=globalThis.RepositoryShell;if(!shell||shell.inspect().tools.includes('betwixt-portal'))return;
@@ -1794,6 +1795,8 @@ function installPlaceSpells(){
   if(!shell.inspect().tools.includes('observatory-place'))shell.registerTool({id:'observatory-place',text:'👁️',label:'Observatory',lane:'resident',onClick:()=>presentLocus('observatory')});
   if(!shell.inspect().tools.includes('workshop-place'))shell.registerTool({id:'workshop-place',text:'🛠️',label:'Workshop',lane:'resident',onClick:()=>presentLocus('workshop')});
   if(!shell.inspect().tools.includes('crucible-container'))shell.registerTool({id:'crucible-container',text:'⚗️',label:'Crucible',lane:'resident',onClick:()=>presentLocus('crucible')});
+  // Temporary sister spell: unlike the resident place spells on the right, Beyond lives in the left temporary tray.
+  if(!shell.inspect().tools.includes('beyond-place'))shell.registerTool({id:'beyond-place',text:'🚪',label:'Beyond',onClick:()=>presentLocus('beyond')});
 }
 function presentLocus(name){
   const next=placeDefinitions[name];if(!next)return false;
@@ -2249,6 +2252,8 @@ registerRelationalNode('betwixt',{object:betwixtPlace,bounds:()=>visibleWorldBou
 registerRelationalNode('workshop',{object:legacyWorkshop,bounds:()=>visibleWorldBounds(legacyWorkshop)});
 registerRelationalNode('observatory',{object:observatoryPlace,bounds:()=>visibleWorldBounds(observatoryPlace)});
 registerRelationalNode('crucible',{object:cruciblePlace,bounds:()=>visibleWorldBounds(cruciblePlace)});
+const beyondPlace=new THREE.Group();beyondPlace.name='place:beyond';beyondPlace.visible=false;scene.add(beyondPlace);
+registerRelationalNode('beyond',{object:beyondPlace,bounds:()=>visibleWorldBounds(beyondPlace)});
 // Jovian is now internal to Workshop; no parent-to-child placement relation is required.
 
 // The legacy organism exists inside its persistent Workshop place.
