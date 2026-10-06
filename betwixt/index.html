@@ -7112,5 +7112,9 @@ function attachBetwixtMirror(){
   return mirror;
 }
 
-(function attachMirrorWhenReady(){if(globalThis.vestibuleReady&&globalThis.vestibule?.presences?.length){attachBetwixtMirror();return}addEventListener("vestibule-ready",attachMirrorWhenReady,{once:true})})();</script></body>
+(function attachMirrorWhenReady(){if(globalThis.vestibuleReady&&globalThis.vestibule?.presences?.length){attachBetwixtMirror();return}addEventListener("vestibule-ready",attachMirrorWhenReady,{once:true})})();</script><script>
+/* SELF-HEAL: Pages must never silently serve a stale Repository build. */
+(()=>{const expected=document.body?.dataset?.repositoryBuild;if(!expected)return;globalThis.__BETWIXT_DEPLOYMENT_ASSERT__=()=>({expected,reported:globalThis.__REPOSITORY_BUILD__,ok:expected===globalThis.__REPOSITORY_BUILD__});})();
+</script>
+</body>
 </html>
