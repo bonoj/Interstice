@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="1fad1349" data-repository-sha="1fad1349dc84f36c58365a110d287999177a4062"><script>globalThis.__REPOSITORY_SHA__="1fad1349dc84f36c58365a110d287999177a4062";globalThis.__REPOSITORY_BUILD__="1fad1349";</script><script>(()=>{
+<body data-repository-build="ebbe559b" data-repository-sha="ebbe559bbffba224bee78ad466a0c22c5794baf9"><script>globalThis.__REPOSITORY_SHA__="ebbe559bbffba224bee78ad466a0c22c5794baf9";globalThis.__REPOSITORY_BUILD__="ebbe559b";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1767,6 +1767,7 @@ function setWorkshopCrucibleEnabled(enabled,button){
   workshopBearingLast=performance.now();window.vestibuleDirty=true;return workshopCrucibleEnabled;
 }
 function toggleWorkshopCrucible(button){return workshopCrucibleEnabled?enterBetwixt():enterPlace('crucible')}
+const beyondPlace=new THREE.Group();beyondPlace.name='place:beyond';beyondPlace.visible=false;scene.add(beyondPlace);
 let currentPlace='betwixt';
 const placeDefinitions={
   betwixt:{object:betwixtPlace,title:'🌀 BETWIXT'},
@@ -2252,7 +2253,6 @@ registerRelationalNode('betwixt',{object:betwixtPlace,bounds:()=>visibleWorldBou
 registerRelationalNode('workshop',{object:legacyWorkshop,bounds:()=>visibleWorldBounds(legacyWorkshop)});
 registerRelationalNode('observatory',{object:observatoryPlace,bounds:()=>visibleWorldBounds(observatoryPlace)});
 registerRelationalNode('crucible',{object:cruciblePlace,bounds:()=>visibleWorldBounds(cruciblePlace)});
-const beyondPlace=new THREE.Group();beyondPlace.name='place:beyond';beyondPlace.visible=false;scene.add(beyondPlace);
 registerRelationalNode('beyond',{object:beyondPlace,bounds:()=>visibleWorldBounds(beyondPlace)});
 // Jovian is now internal to Workshop; no parent-to-child placement relation is required.
 
