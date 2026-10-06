@@ -2750,6 +2750,101 @@ registerRelationalNode('observer-eye',{object:observerTwixt,bounds:()=>observerT
 registerRelationalNode('crucible-twixt',{object:workshopCrucibleBetwixtable,bounds:()=>workshopCrucibleBetwixtable.userData.betwixtable.bounds()});
 relateSpatial({subject:'observer-eye',kind:'above',reference:'crucible-twixt',gap:2.0});
 
+// SIX CITIES — QUIET WORLD T0
+// Re-ask the old civilization question in current Betwixt grammar. These are not
+// imported project marbles: six native, focusable loci share the Crucible/Observer
+// geoglass body and Workshop brass. One readable verb differentiates each city.
+const quietCityBrass=workshopCrucibleStandMat;
+const quietCityGlass=workshopCrucibleOrbGlass;
+const quietCityDark=new THREE.MeshStandardMaterial({color:0x282a28,roughness:.62,metalness:.28});
+const quietCityNames=['launcher','drone','unzip','thumper','reservoir','link'];
+const quietCityRingRadius=4.35;
+const quietCityNodes=[];
+
+function quietCityCylinder(parent,a,b,r,mat=quietCityBrass,segments=8){
+  const d=b.clone().sub(a),m=a.clone().add(b).multiplyScalar(.5);
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),segments),mat);
+  mesh.position.copy(m);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
+  mesh.castShadow=true;parent.add(mesh);return mesh;
+}
+function quietCityBox(parent,size,pos,mat=quietCityBrass){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(size.x,size.y,size.z),mat);
+  mesh.position.copy(pos);mesh.castShadow=true;parent.add(mesh);return mesh;
+}
+function buildQuietCityBody(root){
+  const orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.50,3),quietCityGlass);
+  orb.position.y=.54;orb.castShadow=true;root.add(orb);
+  const cradle=new THREE.Mesh(new THREE.TorusGeometry(.535,.035,8,32),quietCityBrass);
+  cradle.rotation.x=Math.PI/2;cradle.position.y=.54;cradle.castShadow=true;root.add(cradle);
+  for(let i=0;i<3;i++){
+    const a=i*Math.PI*2/3,foot=new THREE.Vector3(Math.cos(a)*.34,.03,Math.sin(a)*.34);
+    const shoulder=new THREE.Vector3(Math.cos(a)*.48,.42,Math.sin(a)*.48);
+    quietCityCylinder(root,foot,shoulder,.032,quietCityBrass,8);
+  }
+}
+function buildQuietCityVerb(kind,root){
+  if(kind==='launcher'){
+    // Trajectory: an unmistakable elevated accelerator leaving the city's body.
+    quietCityCylinder(root,new THREE.Vector3(-.30,.43,0),new THREE.Vector3(.86,1.13,0),.065,quietCityBrass,10);
+    quietCityCylinder(root,new THREE.Vector3(.78,1.08,0),new THREE.Vector3(1.02,1.22,0),.095,quietCityBrass,10);
+    quietCityBox(root,new THREE.Vector3(.34,.08,.28),new THREE.Vector3(-.34,.14,0));
+  }else if(kind==='drone'){
+    // Multiplicity: fabrication nest with six little brass docks around the crown.
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.18,8),quietCityBrass);hub.position.y=1.02;hub.castShadow=true;root.add(hub);
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3,p=new THREE.Vector3(Math.cos(a)*.58,.88,Math.sin(a)*.58);
+      quietCityCylinder(root,new THREE.Vector3(Math.cos(a)*.22,.96,Math.sin(a)*.22),p,.025,quietCityBrass,6);
+      const dock=quietCityBox(root,new THREE.Vector3(.15,.045,.15),p,quietCityBrass);dock.rotation.y=-a;
+    }
+  }else if(kind==='unzip'){
+    // Separation: one intake physically forks into three outputs.
+    const intake=new THREE.Vector3(-.78,.52,0),throat=new THREE.Vector3(-.34,.52,0);
+    quietCityCylinder(root,intake,throat,.085,quietCityDark,10);
+    for(const z of [-.38,0,.38])quietCityCylinder(root,new THREE.Vector3(.24,.52,0),new THREE.Vector3(.86,.42,z),.045,quietCityBrass,8);
+    const splitter=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,.16,8),quietCityBrass);splitter.rotation.z=Math.PI/2;splitter.position.set(.16,.52,0);splitter.castShadow=true;root.add(splitter);
+  }else if(kind==='thumper'){
+    // Transformation, not "factory": a huge asymmetric working arm reaches beyond the city footprint.
+    const shoulder=new THREE.Vector3(.22,.70,0),elbow=new THREE.Vector3(.88,.98,0),tool=new THREE.Vector3(1.18,.22,0);
+    quietCityCylinder(root,shoulder,elbow,.095,quietCityBrass,10);
+    quietCityCylinder(root,elbow,tool,.075,quietCityBrass,10);
+    const head=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,.18,8),quietCityBrass);head.position.copy(tool);head.rotation.z=Math.PI/2;head.castShadow=true;root.add(head);
+    quietCityBox(root,new THREE.Vector3(.62,.10,.48),new THREE.Vector3(.42,.08,0),quietCityDark);
+  }else if(kind==='reservoir'){
+    // Containment: an oversized glass vessel seated in a brass receiving collar.
+    const vessel=new THREE.Mesh(new THREE.SphereGeometry(.46,24,14,0,Math.PI*2,0,Math.PI/2),quietCityGlass);
+    vessel.position.y=1.00;vessel.castShadow=true;root.add(vessel);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(.46,.045,8,32),quietCityBrass);rim.rotation.x=Math.PI/2;rim.position.y=1.00;rim.castShadow=true;root.add(rim);
+    for(const x of [-.33,.33])quietCityCylinder(root,new THREE.Vector3(x,.06,-.20),new THREE.Vector3(x,.98,-.20),.028,quietCityBrass,7);
+  }else if(kind==='link'){
+    // Connectivity: six radial interface arms point beyond the city toward peers.
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,.20,8),quietCityBrass);hub.position.y=.82;hub.castShadow=true;root.add(hub);
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3,from=new THREE.Vector3(Math.cos(a)*.18,.82,Math.sin(a)*.18),to=new THREE.Vector3(Math.cos(a)*.86,.82,Math.sin(a)*.86);
+      quietCityCylinder(root,from,to,.035,quietCityBrass,8);
+      const collar=new THREE.Mesh(new THREE.TorusGeometry(.105,.026,7,16),quietCityBrass);collar.position.copy(to);collar.rotation.set(Math.PI/2,0,-a);collar.castShadow=true;root.add(collar);
+    }
+  }
+}
+
+for(let i=0;i<quietCityNames.length;i++){
+  const kind=quietCityNames[i],a=-Math.PI/2+i*Math.PI*2/quietCityNames.length;
+  const node=buildBetwixtable({
+    name:'quiet-city:'+kind,
+    parent:betwixtPlace,
+    at:new THREE.Vector3(Math.cos(a)*quietCityRingRadius,GROUND_Y,Math.sin(a)*quietCityRingRadius),
+    padding:.24,
+    build:(root)=>{buildQuietCityBody(root);buildQuietCityVerb(kind,root)}
+  });
+  node.rotation.y=-a+Math.PI; // functional face generally addresses the shared center.
+  quietCityNodes.push(node);
+}
+globalThis.QuietCities={
+  nodes:quietCityNodes,
+  inspect:()=>quietCityNodes.map((node,i)=>({kind:quietCityNames[i],position:node.position.toArray()}))
+};
+
+
 function tapObserverTwixt(){
   if(focusedWorkshopObject!==observerTwixt){
     if(focusedWorkshopObject)dismissWorkshopFocus();
