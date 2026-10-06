@@ -28,15 +28,15 @@ jobs:
       - name: Stamp deployed Betwixt provenance
         run: |
           set -euo pipefail
-          expected="${GITHUB_SHA}"
+          expected="$(tr -d '[:space:]' < betwixt/.repository-sha)"
+          test "${#expected}" = 40
           build="${expected:0:8}"
-          printf '%s\n' "${expected}" > betwixt/.repository-sha
           python3 - <<'PY'
           import os, re
           from pathlib import Path
           path = Path("betwixt/index.html")
           text = path.read_text()
-          sha = os.environ["GITHUB_SHA"]
+          sha = Path("betwixt/.repository-sha").read_text().strip()
           build = sha[:8]
           text, n1 = re.subn(r'data-repository-build="[^"]+"', f'data-repository-build="{build}"', text, count=1)
           text, n2 = re.subn(r'data-repository-sha="[^"]+"', f'data-repository-sha="{sha}"', text, count=1)
@@ -62,7 +62,8 @@ jobs:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
-          expected="${GITHUB_SHA}"
+          expected="$(tr -d '[:space:]' < betwixt/.repository-sha)"
+          test "${#expected}" = 40
           build="${expected:0:8}"
           url="${PAGE_URL%/}/betwixt/?verify=${expected}"
           for attempt in {1..12}; do
