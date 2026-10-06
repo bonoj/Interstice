@@ -5917,11 +5917,11 @@ function createTerrainSystem({THREE,scene}){
     const [sx,sz,kind,amp,phase]=a.site;
     return SURFACE_Y+amp*functionalRaw(kind,x-sx,z-sz,phase)*edge;
   }
-  // Progressive realization, not progressive recomputation. The final virgin
-  // function is sampled once. During the five-second arrival, terrain chunks cross
-  // a deterministic expanding front exactly once and are committed at final height.
-  // Already-realized chunks are never remeshed merely because time advanced.
-  let functionalTarget=null,functionalCommitted=null;
+  // Progressive realization under a tiny per-frame work budget. The virgin
+  // function is sampled once. A fine radial front commits scalar-field columns at
+  // final height; only terrain chunks touched by newly born columns are remeshed.
+  // Support is intentionally deferred: interaction is locked until genesis completes.
+  let functionalTarget=null,functionalColumns=null,functionalOrder=null;
   function sampleFunctionalTarget(){
     functionalTarget=new Float32Array(field.length);
     for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);functionalTarget[idx(x,y,z)]=functionalHeight(p.x,p.z)-p.y}
@@ -5929,42 +5929,52 @@ function createTerrainSystem({THREE,scene}){
   function writeFlatFunctional(){
     for(let z=0;z<NZ;z++)for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){const p=wp(x,y,z);field[idx(x,y,z)]=SURFACE_Y-p.y}
   }
-  function commitFunctionalChunk(cx,cz){
-    const x0=cx*CHUNK,x1=Math.min(NX-1,x0+CHUNK),z0=cz*CHUNK,z1=Math.min(NZ-1,z0+CHUNK);
-    // One-cell halo makes the final seam between a born and unborn chunk geometrically
-    // honest without requiring previously born neighbors to be rebuilt.
-    const hx0=Math.max(0,x0-1),hx1=Math.min(NX-1,x1+1),hz0=Math.max(0,z0-1),hz1=Math.min(NZ-1,z1+1);
-    for(let z=hz0;z<=hz1;z++)for(let y=0;y<NY;y++)for(let x=hx0;x<=hx1;x++)field[idx(x,y,z)]=functionalTarget[idx(x,y,z)];
-    rebuildChunk(chunks[cx+CX*cz]);
-    return{x0,x1,z0,z1};
+  function buildFunctionalOrder(){
+    const mx=(NX-1)*.5,mz=(NZ-1)*.5,maxD=Math.hypot(mx,mz)||1,out=[];
+    for(let z=0;z<NZ;z++)for(let x=0;x<NX;x++)out.push({x,z,d:Math.hypot(x-mx,z-mz)/maxD});
+    out.sort((a,b)=>a.d-b.d||a.z-b.z||a.x-b.x);return out;
+  }
+  function commitFunctionalColumn(x,z,dirtyChunks){
+    for(let y=0;y<NY;y++)field[idx(x,y,z)]=functionalTarget[idx(x,y,z)];
+    // A scalar column can affect the cells immediately to its left/up too.
+    for(const dx of [-1,0])for(const dz of [-1,0]){
+      const cellX=x+dx,cellZ=z+dz;if(cellX<0||cellZ<0||cellX>=NX-1||cellZ>=NZ-1)continue;
+      const cx=Math.min(CX-1,Math.floor(cellX/CHUNK)),cz=Math.min(CZ-1,Math.floor(cellZ/CHUNK));
+      dirtyChunks.add(cx+CX*cz);
+    }
   }
   function startFunctionalArrival(now=performance.now()){
     sampleFunctionalTarget();writeFlatFunctional();
-    functionalCommitted=new Uint8Array(CX*CZ);
-    functionalArrival={start:now,progress:0,committed:0,total:CX*CZ,active:true};
-    rebuild();rebuildSupport();
-    return functionalArrival;
+    functionalColumns=new Uint8Array(NX*NZ);functionalOrder=buildFunctionalOrder();
+    functionalArrival={start:now,progress:0,cursor:0,committed:0,total:NX*NZ,active:true};
+    rebuild();rebuildSupport();return functionalArrival;
   }
   function updateFunctionalArrival(now=performance.now()){
     if(!functionalArrival?.active)return false;
+    const frameStart=performance.now(),budgetMs=2.25;
     const p=THREE.MathUtils.clamp((now-functionalArrival.start)/FUNCTIONAL_ARRIVAL_MS,0,1);
     functionalArrival.progress=p;
-    // A radial birth front from the specimen center. Distance is normalized to the
-    // farthest chunk center, so the complete terrain is guaranteed by t=5s.
-    const centers=[],mx=(CX-1)*.5,mz=(CZ-1)*.5,maxD=Math.hypot(mx,mz)||1;
-    for(let cz=0;cz<CZ;cz++)for(let cx=0;cx<CX;cx++)centers.push({cx,cz,d:Math.hypot(cx-mx,cz-mz)/maxD});
-    centers.sort((a,b)=>a.d-b.d);
-    let changed=false;
-    for(const c of centers){
-      const k=c.cx+CX*c.cz;if(functionalCommitted[k]||c.d>p)continue;
-      commitFunctionalChunk(c.cx,c.cz);functionalCommitted[k]=1;functionalArrival.committed++;changed=true;
+    // Time defines how far reality is allowed to have propagated. Budget defines how
+    // much of that eligible frontier this frame may actually become geometry.
+    const eligible=Math.min(functionalOrder.length,Math.ceil(p*functionalOrder.length));
+    const dirty=new Set();let changed=false;
+    while(functionalArrival.cursor<eligible){
+      const c=functionalOrder[functionalArrival.cursor],k=c.x+NX*c.z;
+      if(!functionalColumns[k]){commitFunctionalColumn(c.x,c.z,dirty);functionalColumns[k]=1;functionalArrival.committed++;changed=true}
+      functionalArrival.cursor++;
+      // Amortize polygonization too: flush a small dirty set before checking budget.
+      if(dirty.size>=2){
+        for(const ci of dirty)rebuildChunk(chunks[ci]);dirty.clear();
+        if(performance.now()-frameStart>=budgetMs)break;
+      }
     }
-    if(changed)rebuildSupport();
-    if(p>=1){
-      // Final authoritative bake. Target already contains the exact field; this copy
-      // also removes any temporary halo ordering ambiguity before mutation is enabled.
+    for(const ci of dirty)rebuildChunk(chunks[ci]);
+    // If a slow device falls behind the nominal five-second front, finish at the same
+    // bounded rate rather than hitching. "Five seconds" is the target, smoothness wins.
+    if(p>=1&&functionalArrival.cursor<functionalOrder.length)return changed;
+    if(functionalArrival.cursor>=functionalOrder.length){
       field.set(functionalTarget);rebuild();rebuildSupport();initial.set(field);
-      functionalArrival.active=false;functionalTarget=null;functionalCommitted=null;
+      functionalArrival.active=false;functionalTarget=null;functionalColumns=null;functionalOrder=null;
     }
     return changed;
   }
