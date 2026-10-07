@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="42477dbb" data-repository-sha="42477dbb5eb2bd488004549128b8bc0c4061cf08"><script>globalThis.__REPOSITORY_SHA__="42477dbb5eb2bd488004549128b8bc0c4061cf08";globalThis.__REPOSITORY_BUILD__="42477dbb";</script><script>(()=>{
+<body data-repository-build="25e3dc26" data-repository-sha="25e3dc26228f4def728358a22c000ae549b5f6f6"><script>globalThis.__REPOSITORY_SHA__="25e3dc26228f4def728358a22c000ae549b5f6f6";globalThis.__REPOSITORY_BUILD__="25e3dc26";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2185,11 +2185,7 @@ function presentLocus(name){
   const next=placeDefinitions[name];if(!next)return false;
   for(const [id,{object}] of Object.entries(placeDefinitions))object.visible=id===name;
   floor.visible=name!=='beyond';
-  if(name==='beyond'){
-    ensureBeyondTerrain();if(beyondTransfers)beyondTransfers.setEnabled(false);
-    const shell=globalThis.RepositoryShell;
-    if(shell&&!shell.inspect().tools.includes('beyond-topology-scan'))shell.registerTool({id:'beyond-topology-scan',text:'🔬',label:'Download topology scan',onClick:downloadBeyondTopologyScan});
-  }
+  if(name==='beyond'){ensureBeyondTerrain();if(beyondTransfers)beyondTransfers.setEnabled(false);}
   currentPlace=name;
   if(name==='crucible'){
     workshopCrucibleEnabled=true;ensureWorkshopTerrain();installWorkshopCrucibleSpells();
@@ -2198,7 +2194,14 @@ function presentLocus(name){
   }
   setBetwixtTitle(next.title);
   if(name==='betwixt'){removeBetwixtPortal();installPlaceSpells()}
-  else{removePlaceSpells();installBetwixtPortal()}
+  else{
+    removePlaceSpells();installBetwixtPortal();
+    if(name==='beyond'){
+      // Install after place-spell cleanup: the scanner is a locus-local temporary spell.
+      const shell=globalThis.RepositoryShell;
+      if(shell&&!shell.inspect().tools.includes('beyond-topology-scan'))shell.registerTool({id:'beyond-topology-scan',text:'🔬',label:'Download topology scan',onClick:downloadBeyondTopologyScan});
+    }
+  }
   window.vestibuleDirty=true;return true;
 }
 function enterBetwixt(){return presentLocus('betwixt')}
