@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="f1fd9975" data-repository-sha="f1fd9975cb8903d6f090a8a6847897fa5e2d04b8"><script>globalThis.__REPOSITORY_SHA__="f1fd9975cb8903d6f090a8a6847897fa5e2d04b8";globalThis.__REPOSITORY_BUILD__="f1fd9975";</script><script>(()=>{
+<body data-repository-build="e87ded59" data-repository-sha="e87ded5964ca1cf118a2ac54dd397e42f55f518a"><script>globalThis.__REPOSITORY_SHA__="e87ded5964ca1cf118a2ac54dd397e42f55f518a";globalThis.__REPOSITORY_BUILD__="e87ded59";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3220,24 +3220,6 @@ const twoRingRail=new THREE.Group();twoRingRail.name='workshop:six-cities:two-ri
   }
   for(const x of [-ringRadius,ringRadius])workshopCyl(twoRingRail,new THREE.Vector3(x,0,-halfLength),new THREE.Vector3(x,0,halfLength),railRadius,workshopCrucibleStandMat,10);
   twoRingRail.position.set(0,1.05,0);
-}
-
-// Eight orb apertures describing two discontinuous cardinal rings.
-const eightRingToroid=new THREE.Group();eightRingToroid.name='workshop:six-cities:eight-ring-toroid';legacyWorkshop.add(eightRingToroid);
-{
- const ar=.535,at=.035,et=.035;
- for(const tr of [1.35,2.55]){
-  for(let i=0;i<4;i++){const ang=i*Math.PI/2,r=new THREE.Mesh(new THREE.TorusGeometry(ar,at,10,36),workshopCrucibleStandMat);r.position.set(Math.cos(ang)*tr,0,Math.sin(ang)*tr);r.rotation.y=Math.PI/2-ang;r.castShadow=true;eightRingToroid.add(r);}
-  // Each aperture owns its two connection points. Neighboring curved edges terminate exactly there.
-  const halfChordAngle=2*Math.asin(ar/(Math.SQRT2*tr));
-  const len=Math.PI/2-2*halfChordAngle;
-  for(let i=0;i<4;i++){
-   const start=i*Math.PI/2+halfChordAngle;
-   const e=new THREE.Mesh(new THREE.TorusGeometry(tr,et,8,28,len),workshopCrucibleStandMat);
-   e.rotation.x=Math.PI/2;e.rotation.z=start;e.castShadow=true;eightRingToroid.add(e);
-  }
- }
- eightRingToroid.position.set(4.2,1.05,0);
 }
 
 // First Workshop pressure: one semantic request becomes a visible 7x7 possibility field.
