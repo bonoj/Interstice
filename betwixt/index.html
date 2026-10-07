@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="543676c2" data-repository-sha="543676c2c635f2296b523d6462a2b192231d91b2"><script>globalThis.__REPOSITORY_SHA__="543676c2c635f2296b523d6462a2b192231d91b2";globalThis.__REPOSITORY_BUILD__="543676c2";</script><script>(()=>{
+<body data-repository-build="877ab11f" data-repository-sha="877ab11faf4cbceece6b4a72e1cf9760967688eb"><script>globalThis.__REPOSITORY_SHA__="877ab11faf4cbceece6b4a72e1cf9760967688eb";globalThis.__REPOSITORY_BUILD__="877ab11f";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3227,7 +3227,7 @@ const eightRingToroid=new THREE.Group();eightRingToroid.name='workshop:six-citie
 {
  const ar=.535,at=.035,et=.035;
  for(const tr of [1.35,2.55]){
-  for(let i=0;i<4;i++){const ang=i*Math.PI/2,r=new THREE.Mesh(new THREE.TorusGeometry(ar,at,10,36),workshopCrucibleStandMat);r.position.set(Math.cos(ang)*tr,0,Math.sin(ang)*tr);r.rotation.y=-ang;r.rotation.x=Math.PI/2;r.castShadow=true;eightRingToroid.add(r);}
+  for(let i=0;i<4;i++){const ang=i*Math.PI/2,r=new THREE.Mesh(new THREE.TorusGeometry(ar,at,10,36),workshopCrucibleStandMat);r.position.set(Math.cos(ang)*tr,0,Math.sin(ang)*tr);r.rotation.y=Math.PI/2-ang;r.castShadow=true;eightRingToroid.add(r);}
   const cut=Math.asin(ar/tr),len=Math.PI/2-2*cut;
   for(let i=0;i<4;i++){const start=i*Math.PI/2+cut,e=new THREE.Mesh(new THREE.TorusGeometry(tr,et,8,28,len),workshopCrucibleStandMat);e.rotation.x=Math.PI/2;e.rotation.z=start;e.castShadow=true;eightRingToroid.add(e);}
  }
