@@ -63,7 +63,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #ink.active{pointer-events:auto}
 </style>
 </head>
-<body data-repository-build="4387e6c7" data-repository-sha="4387e6c7287c2eda40b366b91c423c2feb25dae6"><script>globalThis.__REPOSITORY_SHA__="4387e6c7287c2eda40b366b91c423c2feb25dae6";globalThis.__REPOSITORY_BUILD__="4387e6c7";</script><script>(()=>{
+<body data-repository-build="7c0ccddd" data-repository-sha="7c0ccddd28603e4b7bafe2511bf0949763030e86"><script>globalThis.__REPOSITORY_SHA__="7c0ccddd28603e4b7bafe2511bf0949763030e86";globalThis.__REPOSITORY_BUILD__="7c0ccddd";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2336,7 +2336,7 @@ function setBetwixtTitle(text){
 function removeBetwixtPortal(){globalThis.RepositoryShell?.removeTool('betwixt-portal')}
 function removePlaceSpells(){
   const shell=globalThis.RepositoryShell;if(!shell)return;
-  for(const id of ['observatory-place','workshop-place','crucible-container','beyond-place','beyond-topology-scan','beyond-observe-prev','beyond-observe-next'])shell.removeTool(id);
+  for(const id of ['observatory-place','workshop-place','crucible-container','beyond-place','beyond-topology-scan','beyond-observe-prev','beyond-observe-next','beyond-seed-next','beyond-history-mutate','beyond-population-fields'])shell.removeTool(id);
 }
 function installBetwixtPortal(){
   const shell=globalThis.RepositoryShell;if(!shell||shell.inspect().tools.includes('betwixt-portal'))return;
@@ -2368,13 +2368,13 @@ function presentLocus(name){
     if(name==='beyond'){
       // Install after place-spell cleanup: the scanner is a locus-local temporary spell.
       const shell=globalThis.RepositoryShell;
-      if(shell&&!shell.inspect().tools.includes('beyond-topology-scan')){
-        shell.registerTool({id:'beyond-topology-scan',text:'🔬',label:'Scan and observe',onClick:downloadBeyondTopologyScan});
-        shell.registerTool({id:'beyond-observe-prev',text:'‹',label:'Previous observation',onClick:()=>cycleBeyondObservation(-1)});
-        shell.registerTool({id:'beyond-observe-next',text:'›',label:'Next observation',onClick:()=>cycleBeyondObservation(1)});
-        shell.registerTool({id:'beyond-seed-next',text:'🎲',label:'Next deterministic world seed',onClick:()=>nextBeyondSeed(1)});
-        shell.registerTool({id:'beyond-history-mutate',text:'✣',label:'Mutate geological history',onClick:()=>mutateBeyondHistory(1)});
-        shell.registerTool({id:'beyond-population-fields',text:'⁙',label:'Population fields: 25k',onClick:toggleBeyondPopulation});
+      if(shell){
+        if(!shell.inspect().tools.includes('beyond-topology-scan'))shell.registerTool({id:'beyond-topology-scan',text:'🔬',label:'Scan and observe',onClick:downloadBeyondTopologyScan});
+        if(!shell.inspect().tools.includes('beyond-observe-prev'))shell.registerTool({id:'beyond-observe-prev',text:'‹',label:'Previous observation',onClick:()=>cycleBeyondObservation(-1)});
+        if(!shell.inspect().tools.includes('beyond-observe-next'))shell.registerTool({id:'beyond-observe-next',text:'›',label:'Next observation',onClick:()=>cycleBeyondObservation(1)});
+        if(!shell.inspect().tools.includes('beyond-seed-next'))shell.registerTool({id:'beyond-seed-next',text:'🎲',label:'Next deterministic world seed',onClick:()=>nextBeyondSeed(1)});
+        if(!shell.inspect().tools.includes('beyond-history-mutate'))shell.registerTool({id:'beyond-history-mutate',text:'✣',label:'Mutate geological history',onClick:()=>mutateBeyondHistory(1)});
+        if(!shell.inspect().tools.includes('beyond-population-fields'))shell.registerTool({id:'beyond-population-fields',text:'⁙',label:'Population fields: 25k',onClick:toggleBeyondPopulation});
       }
     }
   }
