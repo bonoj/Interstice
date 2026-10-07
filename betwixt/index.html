@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="7f231b26" data-repository-sha="7f231b26e520421bfd23e0c50f3bc338d07622c0"><script>globalThis.__REPOSITORY_SHA__="7f231b26e520421bfd23e0c50f3bc338d07622c0";globalThis.__REPOSITORY_BUILD__="7f231b26";</script><script>(()=>{
+<body data-repository-build="26f2ac7c" data-repository-sha="26f2ac7ce3d4f88a43bcc2cba1e92acae10abe7c"><script>globalThis.__REPOSITORY_SHA__="26f2ac7ce3d4f88a43bcc2cba1e92acae10abe7c";globalThis.__REPOSITORY_BUILD__="26f2ac7c";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3220,6 +3220,18 @@ const twoRingRail=new THREE.Group();twoRingRail.name='workshop:six-cities:two-ri
   }
   for(const x of [-ringRadius,ringRadius])workshopCyl(twoRingRail,new THREE.Vector3(x,0,-halfLength),new THREE.Vector3(x,0,halfLength),railRadius,workshopCrucibleStandMat,10);
   twoRingRail.position.set(0,1.05,0);
+}
+
+// Eight orb apertures describing two discontinuous cardinal rings.
+const eightRingToroid=new THREE.Group();eightRingToroid.name='workshop:six-cities:eight-ring-toroid';legacyWorkshop.add(eightRingToroid);
+{
+ const ar=.535,at=.035,et=.035;
+ for(const tr of [1.35,2.55]){
+  for(let i=0;i<4;i++){const ang=i*Math.PI/2,r=new THREE.Mesh(new THREE.TorusGeometry(ar,at,10,36),workshopCrucibleStandMat);r.position.set(Math.cos(ang)*tr,0,Math.sin(ang)*tr);r.rotation.y=-ang;r.castShadow=true;eightRingToroid.add(r);}
+  const cut=Math.asin(ar/tr),len=Math.PI/2-2*cut;
+  for(let i=0;i<4;i++){const start=i*Math.PI/2+cut,e=new THREE.Mesh(new THREE.TorusGeometry(tr,et,8,28,len),workshopCrucibleStandMat);e.rotation.x=Math.PI/2;e.rotation.z=start;e.castShadow=true;eightRingToroid.add(e);}
+ }
+ eightRingToroid.position.set(4.2,1.05,0);
 }
 
 // First Workshop pressure: one semantic request becomes a visible 7x7 possibility field.
