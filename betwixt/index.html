@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="9618e17d" data-repository-sha="9618e17dc9d894141460ee946c812000b7cdbd57"><script>globalThis.__REPOSITORY_SHA__="9618e17dc9d894141460ee946c812000b7cdbd57";globalThis.__REPOSITORY_BUILD__="9618e17d";</script><script>(()=>{
+<body data-repository-build="dfaa5ada" data-repository-sha="dfaa5ada017ae5574d592c5e74246d84c608a036"><script>globalThis.__REPOSITORY_SHA__="dfaa5ada017ae5574d592c5e74246d84c608a036";globalThis.__REPOSITORY_BUILD__="dfaa5ada";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3972,13 +3972,12 @@ const workshopTabletopBetwixtable=buildBetwixtable({
     lowSites.sort((a,b)=>a.h-b.h);
     const waterSite=lowSites[0];
     const lavaSite=lowSites.find(p=>Math.hypot(p.x-waterSite.x,p.z-waterSite.z)>23)||lowSites[1];
-    canyonWater.fillRegion({x:waterSite.x/liquidScale,z:waterSite.z/liquidScale,radius:2.6,amount:3.8});
-    cauldronLava.fillRegion({x:lavaSite.x/liquidScale,z:lavaSite.z/liquidScale,radius:1.8,amount:3.2});
+    // Begin dry. Water and lava are added only through the snowglobe spells.
     canyonWater.setEnabled(true);cauldronLava.setEnabled(true);
     root.userData.snowglobeLiquids={water:canyonWater,lava:cauldronLava,sites:{water:waterSite,lava:lavaSite},scale:liquidScale};
     globalThis.SnowglobeLiquids={
       inspect:()=>({sites:{water:waterSite,lava:lavaSite},water:canyonWater.inspect(),lava:cauldronLava.inspect()}),
-      reset:()=>{canyonWater.reset();cauldronLava.reset();canyonWater.fillRegion({x:waterSite.x/liquidScale,z:waterSite.z/liquidScale,radius:2.6,amount:3.8});cauldronLava.fillRegion({x:lavaSite.x/liquidScale,z:lavaSite.z/liquidScale,radius:1.8,amount:3.2})}
+      reset:()=>{canyonWater.reset();cauldronLava.reset()}
     };
 
     // Catch v0: the verified two-ring/two-rail pipe and five-ring half-cage,
