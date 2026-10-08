@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="cf00b53b" data-repository-sha="cf00b53b45f320d65600bed7a5224796c76efd8e"><script>globalThis.__REPOSITORY_SHA__="cf00b53b45f320d65600bed7a5224796c76efd8e";globalThis.__REPOSITORY_BUILD__="cf00b53b";</script><script>(()=>{
+<body data-repository-build="3284fa06" data-repository-sha="3284fa0625ec61e47e73b022d5185e21f59a8e4d"><script>globalThis.__REPOSITORY_SHA__="3284fa0625ec61e47e73b022d5185e21f59a8e4d";globalThis.__REPOSITORY_BUILD__="3284fa06";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2457,6 +2457,8 @@ function chooseWorkshopCrucibleTool(tool,button){
 }
 // Snowglobe-only temporary tools: select a material, then tap geology to pour.
 let snowglobeTool=null,snowglobeSpellsVisible=false;
+const snowglobeTapHistory=[];
+const recordSnowglobeTap=entry=>{snowglobeTapHistory.push({timeMs:Math.round(performance.now()),...entry});if(snowglobeTapHistory.length>12)snowglobeTapHistory.shift()};
 const snowglobeSpellIds=['snowglobe-water','snowglobe-lava','snowglobe-survey'];
 function chooseSnowglobeTool(tool){
   snowglobeTool=snowglobeTool===tool?null:tool;
@@ -4162,6 +4164,7 @@ const workshopTabletopBetwixtable=buildBetwixtable({
     };
     const downloadSnowglobeSurvey=(tap)=>{
       const payload=surveySnowglobe(tap);
+      payload.materialTapDiagnostics={selectedSpell:snowglobeTool,attempts:snowglobeTapHistory.map(e=>({...e})),currentLiquids:globalThis.SnowglobeLiquids?.inspect?.()};
       const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
       const url=URL.createObjectURL(blob),a=document.createElement('a');
       a.href=url;a.download='six-cities-snowglobe-survey.json';document.body.append(a);a.click();a.remove();
@@ -6314,26 +6317,41 @@ const SelectionSystem={
     return null;
   },
   tap(x,y){
-    if(legacyWorkshop.visible&&fluidGlobeTap(x,y))return;
-    if(focusedWorkshopObject===workshopTabletopBetwixtable&&snowglobeTool){
-      const r=canvas.getBoundingClientRect();
-      pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
-      raycaster.setFromCamera(pointerNDC,camera);
-      const presentation=workshopTabletopBetwixtable.userData.betwixtable.presentation;
-      const globe=presentation.userData.snowglobe;
-      const hit=raycaster.intersectObject(globe.mesh,false)[0];
-      if(hit){
-        const local=globe.root.worldToLocal(hit.point.clone());
-        const liquids=presentation.userData.snowglobeLiquids;
-        const liquid=liquids?.[snowglobeTool];
-        if(liquid){
-          const x=local.x/liquids.scale,z=local.z/liquids.scale;
-          liquid.addTimedSource({x,z,rate:1.6,duration:3});
-          liquid.setEnabled(true);
-          window.vestibuleDirty=true;
-        }
-        return;
-      }
+    const materialFocus=focusedWorkshopObject===workshopTabletopBetwixtable&&!!snowglobeTool;
+    if(legacyWorkshop.visible&&fluidGlobeTap(x,y)){
+      if(materialFocus)recordSnowglobeTap({spell:snowglobeTool,stage:'consumed-by-fluid-globe'});
+      return;
+    }
+    if(materialFocus){
+      const attempt={spell:snowglobeTool,stage:'handler-entered',pointer:[x,y]};
+      try{
+        const r=canvas.getBoundingClientRect();
+        pointerNDC.set(((x-r.left)/r.width)*2-1,-((y-r.top)/r.height)*2+1);
+        raycaster.setFromCamera(pointerNDC,camera);
+        const presentation=workshopTabletopBetwixtable.userData.betwixtable.presentation;
+        const globe=presentation.userData.snowglobe;
+        const hit=raycaster.intersectObject(globe.mesh,false)[0];
+        attempt.raycastHit=!!hit;
+        if(hit){
+          attempt.world=hit.point.toArray();
+          const local=globe.root.worldToLocal(hit.point.clone());
+          attempt.geological=local.toArray();
+          const liquids=presentation.userData.snowglobeLiquids;
+          const liquid=liquids?.[snowglobeTool];
+          attempt.solver=liquids?[local.x/liquids.scale,local.z/liquids.scale]:null;
+          attempt.insideDomain=attempt.solver?Math.hypot(...attempt.solver)<49/liquids.scale:false;
+          if(liquid){
+            attempt.before=liquid.inspect();
+            attempt.source=liquid.addTimedSource({x:attempt.solver[0],z:attempt.solver[1],rate:1.6,duration:3});
+            liquid.setEnabled(true);
+            attempt.afterQueue=liquid.inspect();
+            attempt.stage='source-queued';
+            window.vestibuleDirty=true;
+          }else attempt.stage='liquid-unavailable';
+        }else attempt.stage='raycast-missed';
+      }catch(error){attempt.stage='error';attempt.error=String(error);}
+      recordSnowglobeTap(attempt);
+      return;
     }
     if(workshopTap(x,y))return;
     const hit=this.pick(x,y);
