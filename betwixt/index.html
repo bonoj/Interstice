@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="2c6dd0ca" data-repository-sha="2c6dd0ca08b48e853de80088dd604888e69f5c8a"><script>globalThis.__REPOSITORY_SHA__="2c6dd0ca08b48e853de80088dd604888e69f5c8a";globalThis.__REPOSITORY_BUILD__="2c6dd0ca";</script><script>(()=>{
+<body data-repository-build="77649ac0" data-repository-sha="77649ac07cf7c21669ab9b5c5543c0e046ef7549"><script>globalThis.__REPOSITORY_SHA__="77649ac07cf7c21669ab9b5c5543c0e046ef7549";globalThis.__REPOSITORY_BUILD__="77649ac0";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1914,9 +1914,13 @@ function createBeyondTerrain(options={}){
     wallGeo.attributes.color.needsUpdate=true;
     wallGeo.computeVertexNormals();
   }
-  const bedrock=new THREE.Mesh(new THREE.CylinderGeometry(R,R,.55,SECTORS),
+  // Bedrock owns the bottom cap. Inset its cylindrical edge beneath the
+  // geological wall, and keep its top just below the immutable height floor:
+  // no coincident faces, no shader depth bias, no visible perimeter gap.
+  const BEDROCK_CAP_CLEARANCE=.035;
+  const bedrock=new THREE.Mesh(new THREE.CylinderGeometry(R-.08,R-.08,.55,SECTORS),
     new THREE.MeshStandardMaterial({color:0x555458,roughness:.96,metalness:.03}));
-  bedrock.name='snowglobe:bedrock';bedrock.position.y=BEDROCK_Y-.275;root.add(bedrock);
+  bedrock.name='snowglobe:bedrock';bedrock.position.y=BEDROCK_Y-BEDROCK_CAP_CLEARANCE-.275;root.add(bedrock);
   function refreshSpecimen(){
     if(!options.miniature)return;
     for(let k=0;k<specimenPositions.length/3;k++){
