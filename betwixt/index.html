@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="7224589e" data-repository-sha="7224589e724a8b77e59ef1693f48ddaf5fb93921"><script>globalThis.__REPOSITORY_SHA__="7224589e724a8b77e59ef1693f48ddaf5fb93921";globalThis.__REPOSITORY_BUILD__="7224589e";</script><script>(()=>{
+<body data-repository-build="53688126" data-repository-sha="53688126033ee16334ce2207430e87590835929f"><script>globalThis.__REPOSITORY_SHA__="53688126033ee16334ce2207430e87590835929f";globalThis.__REPOSITORY_BUILD__="53688126";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -1864,13 +1864,13 @@ function createBeyondTerrain(options={}){
   const wallColors=new Float32Array(wallPositions.length),wallIndices=[];
   const wallVertex=(t,l)=>t*(WALL_LEVELS+1)+l;
   function sectionColor(x,z,y,surfaceY){
-    const g=geology(x,z);
-    const originalSurface=sampleWorld(x,z).height;
-    // Deformation translates the local section with its surface; older folded
-    // strata retain their structural phase below the present-day exposure.
-    const structuralCoordinate=deformation(x,z)-(originalSurface-y);
-    const weathering=deformation(x,z)-g.bedrock;
-    const layer=stratumState(structuralCoordinate,weathering).layer;
+    // Bedding is a pre-erosion material coordinate. It is independent of
+    // today's topographic height: excavation reveals existing rock rather
+    // than bending every layer to follow a newly carved valley.
+    const structural=deformation(x,z);
+    const foldDisplacement=structural-.82;
+    const beddingCoordinate=y-foldDisplacement;
+    const layer=stratumState(beddingCoordinate,0).layer;
     const material=new THREE.Color(strata[layer].color);
     const grain=.88+.12*noise(x*.18+y*.09,z*.18-y*.07,887);
     material.multiplyScalar(grain);
