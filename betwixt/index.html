@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="baa28c9b" data-repository-sha="baa28c9bb70925e3e9399d1c604981d61a1fee90"><script>globalThis.__REPOSITORY_SHA__="baa28c9bb70925e3e9399d1c604981d61a1fee90";globalThis.__REPOSITORY_BUILD__="baa28c9b";</script><script>(()=>{
+<body data-repository-build="27d87bee" data-repository-sha="27d87bee84517cd70e47b965daf7f6987ff4b215"><script>globalThis.__REPOSITORY_SHA__="27d87bee84517cd70e47b965daf7f6987ff4b215";globalThis.__REPOSITORY_BUILD__="27d87bee";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -2190,7 +2190,7 @@ let beyondPhaseCycle=null;
 function ensureBeyondPhaseCycle(){
   if(beyondPhaseCycle)return beyondPhaseCycle;
   const terrain=ensureBeyondTerrain(),root=new THREE.Group();root.name='beyond:white-meadow-phase-matter';beyondPlace.add(root);
-  const COUNT=500000,geo=new THREE.SphereGeometry(.055,5,3);
+  const COUNT=25000,geo=new THREE.SphereGeometry(.055,5,3);
   const solidMat=new THREE.MeshStandardMaterial({color:0xf0eee7,roughness:.62,metalness:.04}),gasMat=new THREE.MeshBasicMaterial({color:0xe8f1ee,transparent:true,opacity:.16,depthWrite:false});
   const solidMesh=new THREE.InstancedMesh(geo,solidMat,COUNT),gasMesh=new THREE.InstancedMesh(new THREE.SphereGeometry(.032,4,3),gasMat,COUNT);
   solidMesh.name='population:white-meadow-bbs';gasMesh.name='phase:gas';for(const m of [solidMesh,gasMesh]){m.frustumCulled=false;root.add(m)}
