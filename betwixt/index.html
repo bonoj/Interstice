@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="53d4e4c3" data-repository-sha="53d4e4c3239e112990cb19832cf18f4a0eff2359"><script>globalThis.__REPOSITORY_SHA__="53d4e4c3239e112990cb19832cf18f4a0eff2359";globalThis.__REPOSITORY_BUILD__="53d4e4c3";</script><script>(()=>{
+<body data-repository-build="13204ea0" data-repository-sha="13204ea0d1c4de6b3fa8cdfc671312580d0c595d"><script>globalThis.__REPOSITORY_SHA__="13204ea0d1c4de6b3fa8cdfc671312580d0c595d";globalThis.__REPOSITORY_BUILD__="13204ea0";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -4115,6 +4115,22 @@ const workshopTabletopBetwixtable=buildBetwixtable({
       inspect:()=>({...catchCity.userData.sixCities,
         groundHeight:globe.groundHeight(catchSite.x,catchSite.z),
         worldScale:globe.root.scale.x})};
+    // Four independent propulsion modules on Catch's lateral receiver docks.
+    // The open sky mouth and pipe throat remain unobstructed.
+    if(globalThis.SixCitiesCatch?.receiver){
+      const engines=[];
+      for(const [i,id] of ['yp','yn','zp','zn'].entries()){
+        const dock=globalThis.SixCitiesCatch.receiver.getObjectByName('catch:receiver:dock:'+id);
+        if(!dock)throw new Error('Catch propulsion dock missing: '+id);
+        const engine=makePropulsionModule({name:'catch:propulsion:'+id,parent:dock});
+        engine.phase=i*Math.PI/2+.17;
+        engine.tilt=i*2.399963229728653+.31;
+        engines.push(engine);
+      }
+      globalThis.SixCitiesCatch.propulsion=engines;
+    }
+
+
     globalThis.SnowglobeTerrain={
       raise:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,Math.abs(amount)),
       carve:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,-Math.abs(amount)),
