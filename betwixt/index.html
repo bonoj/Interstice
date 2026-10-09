@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="98470fa9" data-repository-sha="98470fa90416c39f399f8840fb7264efadbb783e"><script>globalThis.__REPOSITORY_SHA__="98470fa90416c39f399f8840fb7264efadbb783e";globalThis.__REPOSITORY_BUILD__="98470fa9";</script><script>(()=>{
+<body data-repository-build="c1217ac1" data-repository-sha="c1217ac175afca6684d1593cb5b219c56c31e81b"><script>globalThis.__REPOSITORY_SHA__="c1217ac175afca6684d1593cb5b219c56c31e81b";globalThis.__REPOSITORY_BUILD__="c1217ac1";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -3182,7 +3182,7 @@ relateSpatial({subject:'observer-eye',kind:'above',reference:'crucible-twixt',ga
 
 // PROPULSION MODULE — the observer seat reused as a freely swivelling thrust locus.
 const propulsionModules=[];
-function makePropulsionModule({name='propulsion-module',parent=betwixtPlace,at=new THREE.Vector3()}={}){
+function makePropulsionModule({name='propulsion-module',parent=betwixtPlace,at=new THREE.Vector3(),registry=propulsionModules}={}){
   const node=new THREE.Group();node.name=name;node.position.copy(at);parent.add(node);
   const gimbal=new THREE.Group();gimbal.name=name+':gimbal';node.add(gimbal);
   const ringRadius=.535,ringTube=.035;
@@ -3195,7 +3195,7 @@ function makePropulsionModule({name='propulsion-module',parent=betwixtPlace,at=n
     cube.position.set(Math.cos(a)*.34,Math.sin(a)*.34,0);cube.rotation.set(a*.31,a*.47,a);cube.castShadow=true;rotor.add(cube);
   }
   const module={node,gimbal,rotor,phase:Math.random()*Math.PI*2,tilt:Math.random()*Math.PI*2};
-  propulsionModules.push(module);return module;
+  registry.push(module);return module;
 }
 function updatePropulsionModules(now){
   for(const m of propulsionModules){
@@ -3939,438 +3939,11 @@ const workshopTabletopBetwixtable=buildBetwixtable({
     const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.31,1.31,.045,48)),glassEdge);
     edge.position.copy(glass.position);root.add(edge);
 
-    // A disposable circular world, compiled from Beyond's full geological history.
-    const globe=createBeyondTerrain({parent:root,miniature:true});
-    globe.root.scale.setScalar(.025);
-    globe.root.position.y=.33;
-    globe.mesh.name='snowglobe:deformable-geological-terrain';
-    globe.mesh.castShadow=true;
-    root.userData.snowglobe=globe;
-
-    // Finite, prefilled geological liquids. Both use the independent Fundamentals,
-    // in a shared 18-cell-space mapped onto the 104-unit miniature geology.
-    const liquidScale=104/18;
-    const liquidTerrain={
-      groundHeight:(x,z)=>globe.groundHeight(x*liquidScale,z*liquidScale)/liquidScale,
-      groundHeightExact:(x,z)=>globe.groundHeight(x*liquidScale,z*liquidScale)/liquidScale,
-      materialBoundary:(x,z)=>{
-        const r=Math.hypot(x,z),inside=r<49/liquidScale;
-        return {inside,distance:Math.abs(49/liquidScale-r),nx:r?x/r:0,nz:r?z/r:0};
-      }
-    };
-    const liquidOwner=new THREE.Group();liquidOwner.name='snowglobe:liquids';
-    liquidOwner.scale.setScalar(liquidScale);globe.root.add(liquidOwner);
-    const canyonWater=createWater({THREE,owner:liquidOwner,terrain:liquidTerrain});
-    const cauldronLava=createLava({THREE,owner:liquidOwner,terrain:liquidTerrain});
-    // Select two separated local geological lows, rather than invented flat basins.
-    const lowSites=[];
-    for(let z=-35;z<=35;z+=2)for(let x=-35;x<=35;x+=2){
-      if(x*x+z*z>36*36)continue;
-      const h=globe.groundHeight(x,z);
-      lowSites.push({x,z,h});
-    }
-    lowSites.sort((a,b)=>a.h-b.h);
-    const waterSite=lowSites[0];
-    const lavaSite=lowSites.find(p=>Math.hypot(p.x-waterSite.x,p.z-waterSite.z)>23)||lowSites[1];
-    // Begin dry. Water and lava are added only through the snowglobe spells.
-    canyonWater.setEnabled(true);cauldronLava.setEnabled(true);
-    root.userData.snowglobeLiquids={water:canyonWater,lava:cauldronLava,sites:{water:waterSite,lava:lavaSite},scale:liquidScale};
-    globalThis.SnowglobeLiquids={
-      inspect:()=>({sites:{water:waterSite,lava:lavaSite},water:canyonWater.inspect(),lava:cauldronLava.inspect()}),
-      reset:()=>{canyonWater.reset();cauldronLava.reset()}
-    };
-
-    // Compose the existing liquid solver and bearing dynamics. No authored
-    // water ribbon, fake height field, or scripted bearing trajectory.
-    // The solver owns surface elevation and horizontal flow. Bearings own
-    // gravity, buoyancy, drag, and their individual lifetimes.
-    const riverRoot=new THREE.Group();riverRoot.name='snowglobe:solver-river-bearings';globe.root.add(riverRoot);
-    const riverHead={x:-30,z:-7},riverMouth={x:29,z:-9};
-    // Finite canyon at rest: construct the full hydrostatic state immediately.
-    // Elevation is specified in geological world coordinates, then converted
-    // to the Fundamental liquid's local solver coordinates.
-    const canyonSurfaceY=waterSite.h+15;
-    const canyonInitial=canyonWater.initializeToLevel(canyonSurfaceY/liquidScale);
-    root.userData.canyonInitial={worldY:canyonSurfaceY,...canyonInitial};
-    const BB_COUNT=260,bbGeo=new THREE.SphereGeometry(.12,6,5);
-    const bbMesh=new THREE.InstancedMesh(bbGeo,new THREE.MeshStandardMaterial({
-      color:0xd8e2d9,roughness:.48,metalness:.12
-    }),BB_COUNT);
-    bbMesh.name='river:physical-floating-bearings';bbMesh.frustumCulled=false;riverRoot.add(bbMesh);
-    const bbDummy=new THREE.Object3D(),bbFlow={depth:0,u:0,v:0};
-    const particles=Array.from({length:BB_COUNT},(_,i)=>({
-      x:riverHead.x,z:riverHead.z,y:0,vx:0,vy:0,vz:0,born:0,active:false,id:i
-    }));
-    let riverLast=performance.now(),riverSpawn=0,riverCursor=0,riverSpawned=0,riverRemoved=0;
-    const spawn=(p,now)=>{
-      const seed=p.id*2.399963+riverSpawned*.754877;
-      p.x=riverHead.x+Math.sin(seed)*.65;p.z=riverHead.z+Math.cos(seed)*.65;
-      const initialSurface=canyonWater.surfaceY(p.x/liquidScale,p.z/liquidScale);
-      p.y=Number.isFinite(initialSurface)?initialSurface*liquidScale+.2:globe.groundHeight(p.x,p.z)+.2;
-      p.vx=0;p.vy=0;p.vz=0;p.born=now;p.active=true;riverSpawned++;
-    };
-    const riverFlow={
-      update(now){
-        const dt=Math.min(.05,Math.max(0,(now-riverLast)/1000));riverLast=now;
-        riverSpawn+=dt*22;
-        while(riverSpawn>=1){riverSpawn--;spawn(particles[riverCursor++%BB_COUNT],now);}
-        let visible=0;
-        for(const p of particles){
-          if(!p.active)continue;
-          const sx=p.x/liquidScale,sz=p.z/liquidScale;
-          const waterY=canyonWater.surfaceY(sx,sz);
-          const wet=Number.isFinite(waterY)&&canyonWater.flowInto(sx,sz,bbFlow);
-          const surface=wet?waterY*liquidScale:NaN;
-          const ground=globe.groundHeight(p.x,p.z);
-          // Buoyancy is a contact force, not a prescribed bobbing animation.
-          // Spring/damping lets individual bearings settle and bob naturally.
-          p.vy-=9.2*dt;
-          if(wet&&surface>ground+.02){
-            const immersion=Math.max(0,Math.min(1,(surface-p.y+.15)/.3));
-            p.vy+=(23*immersion-2.7*p.vy*immersion)*dt;
-            const flowX=bbFlow.u*liquidScale,flowZ=bbFlow.v*liquidScale;
-            p.vx+=(flowX-p.vx)*Math.min(1,dt*3.5*immersion);
-            p.vz+=(flowZ-p.vz)*Math.min(1,dt*3.5*immersion);
-          }
-          p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
-          if(p.y<ground+.12){
-            p.y=ground+.12;
-            if(p.vy<0)p.vy=-p.vy*.28;
-            p.vx*=Math.max(0,1-dt*2);p.vz*=Math.max(0,1-dt*2);
-          }
-          // Exit or expire; new objects always spawn at the headwater.
-          if(p.x>riverMouth.x||Math.hypot(p.x,p.z)>47||now-p.born>15000){
-            p.active=false;riverRemoved++;continue;
-          }
-          bbDummy.position.set(p.x,p.y,p.z);bbDummy.scale.setScalar(1);
-          bbDummy.updateMatrix();bbMesh.setMatrixAt(visible++,bbDummy.matrix);
-        }
-        bbMesh.count=visible;bbMesh.instanceMatrix.needsUpdate=true;
-        window.vestibuleDirty=true;
-      },
-      inspect:()=>({kind:'solver-coupled-floating-bearings',active:particles.filter(p=>p.active).length,
-        spawned:riverSpawned,removed:riverRemoved,water:canyonWater.inspect()}),
-      reset(){for(const p of particles)p.active=false;riverLast=performance.now();riverSpawn=0;}
-    };
-    root.userData.snowglobeRiver=riverFlow;globalThis.SnowglobeRiver=riverFlow;
-
-    // Catch v0: the verified two-ring/two-rail pipe and five-ring half-cage,
-    // assembled in geological local units, then miniaturized together by globe.root.
-    // Ring joint centerline spacing .11 comes from Observer's ocular seat.
-    // The cage stays fixed; its open +Y mouth feeds the pipe's continuous -Y throat.
-    const catchCity=new THREE.Group();catchCity.name='six-cities:catch:v0';
-    const catchSite={x:12.197,z:18.070};
-    catchCity.position.set(catchSite.x,globe.groundHeight(catchSite.x,catchSite.z)+.12,catchSite.z);
-    globe.root.add(catchCity);
-    const catchMetal=brass;
-    const catchRing=(parent,name,r=.66,t=.055)=>{
-      const mesh=new THREE.Mesh(new THREE.TorusGeometry(r,t,10,40),catchMetal);
-      mesh.name=name;mesh.castShadow=true;parent.add(mesh);return mesh;
-    };
-    const catchPipe=new THREE.Group();catchPipe.name='catch:two-ring-two-rail';catchCity.add(catchPipe);
-    const pipeHeight=2.5;
-    for(const y of [0,pipeHeight]){
-      const ring=catchRing(catchPipe,'catch:pipe:ring:'+y,.66,.035);
-      ring.rotation.x=Math.PI/2;ring.position.y=y;
-    }
-    for(const x of [-.66,.66]){
-      const rail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,pipeHeight,10),catchMetal);
-      rail.name='catch:pipe:rail';rail.position.set(x,pipeHeight/2,0);rail.castShadow=true;catchPipe.add(rail);
-    }
-    const receiver=new THREE.Group();receiver.name='catch:five-ring-half-cage';
-    // Receiver's canonical missing +X dock is rotated to +Y (open sky).
-    receiver.rotation.z=Math.PI/2;
-    receiver.position.y=pipeHeight+.11+2.56;
-    catchCity.add(receiver);
-    const nodeRadius=2.56,ringRadius=.66,tube=.055;
-    const nodes={xp:new THREE.Vector3(nodeRadius,0,0),xn:new THREE.Vector3(-nodeRadius,0,0),
-      yp:new THREE.Vector3(0,nodeRadius,0),yn:new THREE.Vector3(0,-nodeRadius,0),
-      zp:new THREE.Vector3(0,0,nodeRadius),zn:new THREE.Vector3(0,0,-nodeRadius)};
-    const dockNormal=new THREE.Vector3(0,0,1);
-    for(const [id,pos] of Object.entries(nodes)){
-      if(id==='xp')continue;
-      const dock=new THREE.Group();dock.name='catch:receiver:dock:'+id;
-      dock.position.copy(pos);dock.quaternion.setFromUnitVectors(dockNormal,pos.clone().normalize());receiver.add(dock);
-      catchRing(dock,'catch:receiver:ring:'+id,ringRadius,tube);
-    }
-    const snap=(a,b)=>{
-      const p=nodes[a],toward=nodes[b].clone().sub(p).normalize(),normal=p.clone().normalize();
-      return p.clone().addScaledVector(toward.addScaledVector(normal,-toward.dot(normal)).normalize(),ringRadius);
-    };
-    const edges=[['xp','yp'],['yp','xn'],['xn','yn'],['yn','xp'],['yp','zp'],['zp','yn'],['yn','zn'],['zn','yp']];
-    for(const [a,b] of edges){
-      if(a==='xp'||b==='xp')continue;
-      const p=snap(a,b),q=snap(b,a),u=p.clone().normalize(),v=q.clone().normalize();
-      const angle=Math.acos(THREE.MathUtils.clamp(u.dot(v),-1,1)),radius=(p.length()+q.length())/2;
-      const curve=new THREE.Curve();
-      curve.getPoint=(t,target=new THREE.Vector3())=>target.copy(u).multiplyScalar(Math.sin((1-t)*angle)/Math.sin(angle))
-        .addScaledVector(v,Math.sin(t*angle)/Math.sin(angle)).normalize().multiplyScalar(radius);
-      const member=new THREE.Mesh(new THREE.TubeGeometry(curve,20,tube,8,false),catchMetal);
-      member.name='catch:receiver:shell:'+a+':'+b;member.castShadow=true;receiver.add(member);
-    }
-    catchCity.userData.sixCities={kind:'catch-v0',site:catchSite,
-      joinedRingCenterlineSpacing:.11,pipeTop:pipeHeight,cageBottom:pipeHeight+.11,
-      miniatureScale:.025,stationaryReceiver:true};
-    globalThis.SixCitiesCatch={root:catchCity,pipe:catchPipe,receiver,
-      inspect:()=>({...catchCity.userData.sixCities,
-        groundHeight:globe.groundHeight(catchSite.x,catchSite.z),
-        worldScale:globe.root.scale.x})};
-    // Four independent propulsion modules on Catch's lateral receiver docks.
-    // The open sky mouth and pipe throat remain unobstructed.
-    if(globalThis.SixCitiesCatch?.receiver){
-      const engines=[];
-      for(const [i,id] of ['yp','yn','zp','zn'].entries()){
-        const dock=globalThis.SixCitiesCatch.receiver.getObjectByName('catch:receiver:dock:'+id);
-        if(!dock)throw new Error('Catch propulsion dock missing: '+id);
-        const engine=makePropulsionModule({name:'catch:propulsion:'+id,parent:dock});
-        engine.phase=i*Math.PI/2+.17;
-        engine.tilt=i*2.399963229728653+.31;
-        engines.push(engine);
-      }
-      globalThis.SixCitiesCatch.propulsion=engines;
-    }
-
-
-    // Twelve independent observer eyes: hover, wander, return. Local geological units.
-    const swarm=[];
-    const swarmRoot=new THREE.Group();swarmRoot.name='catch:observer-swarm';globe.root.add(swarmRoot);
-    let swarmSeed=741;const rand=()=>{swarmSeed=(Math.imul(swarmSeed,1664525)+1013904223)>>>0;return swarmSeed/4294967296};
-    const home=new THREE.Vector3(catchSite.x,catchCity.position.y+7.6,catchSite.z);
-    const safeY=(x,z,y)=>Math.max(y,globe.groundHeight(x,z)+1.25);
-    const pick=(a,homeward=false)=>{
-      const angle=rand()*Math.PI*2,radius=homeward?2+rand()*4:5+rand()*13;
-      const x=catchSite.x+Math.cos(angle)*radius,z=catchSite.z+Math.sin(angle)*radius;
-      return new THREE.Vector3(x,safeY(x,z,homeward?home.y+rand()*3:globe.groundHeight(x,z)+3+rand()*8),z);
-    };
-    for(let i=0;i<12;i++){
-      const node=new THREE.Group();node.name='catch:observer:'+i;swarmRoot.add(node);
-      buildObserverPresentation(node);
-      const angle=i*Math.PI*2/12,rad=3.2+(i%3)*1.2;
-      node.position.set(catchSite.x+Math.cos(angle)*rad,home.y+(i%4)*1.25,catchSite.z+Math.sin(angle)*rad);
-      const eye=node.userData.observerEye,seat=node.userData.observerOcularSeat;
-      swarm.push({node,eye,seat,phase:rand()*6.283,mode:'hover',until:1500+rand()*7000,
-        target:pick(null,true),speed:2.0+rand()*1.4});
-    }
-    let swarmLast=0;
-    const focus=new THREE.Vector3(),curiosity={phase:'idle'};
-    const updateCatchSwarm=(now)=>{
-      const dt=Math.min(.05,Math.max(0,(now-swarmLast)/1000));swarmLast=now;
-      const cycle=now%44000,phase=cycle<17000?'idle':cycle<34000?'investigate':'dismiss';
-      if(phase!==curiosity.phase){
-        curiosity.phase=phase;
-        for(let i=1;i<swarm.length;i++){
-          const a=swarm[i];
-          if(phase==='investigate'){a.mode='investigate';a.until=Infinity;}
-          else if(phase==='dismiss'){a.mode='return';a.target=pick(a,true);a.until=Infinity;a.speed=7;}
-          else {a.mode='hover';a.until=now+2000+rand()*4000;a.speed=2.5;}
-        }
-      }
-      let n=0;focus.set(0,0,0);
-      for(const p of particles)if(p.active){focus.x+=p.x;focus.y+=p.y;focus.z+=p.z;n++;}
-      if(n)focus.multiplyScalar(1/n);
-      else focus.set(riverHead.x,globe.groundHeight(riverHead.x,riverHead.z)+3,riverHead.z);
-      focus.y=safeY(focus.x,focus.z,focus.y+3);
-      for(let i=1;i<swarm.length;i++)if(phase==='investigate'){
-        const a=swarm[i],angle=(i-1)*Math.PI*2/11+now*.00023,r=2.4+(i%3)*.6;
-        const x=focus.x+Math.cos(angle)*r,z=focus.z+Math.sin(angle)*r;
-        a.target.set(x,safeY(x,z,focus.y+(i%4)*.65),z);a.speed=12;
-      }
-      swarm[0].mode='sentinel';swarm[0].until=Infinity;
-      swarm[0].target.set(catchSite.x,home.y+3,catchSite.z);
-      for(let i=0;i<swarm.length;i++){
-        const a=swarm[i];
-        if(now>=a.until&&i!==0&&a.mode!=='investigate'){
-          if(a.mode==='hover'){a.mode='wander';a.target=pick(a);a.until=now+6000+rand()*9000;}
-          else if(a.mode==='wander'){a.mode='return';a.target=pick(a,true);a.until=Infinity;}
-          else {a.mode='hover';a.until=now+4000+rand()*5000;}
-        }
-        if(a.mode!=='hover'){
-          const delta=a.target.clone().sub(a.node.position),distance=delta.length();
-          if(a.mode==='return'&&distance<.35){a.mode='hover';a.until=now+4000+rand()*5000;}
-          else if(distance>.001){
-            const step=Math.min(distance,a.speed*dt);a.node.position.addScaledVector(delta,step/distance);
-          }
-        }else{
-          a.node.position.y+=Math.sin(now*.0011+a.phase)*dt*.12;
-        }
-        a.node.position.y=safeY(a.node.position.x,a.node.position.z,a.node.position.y);
-        if(a.mode==='investigate'||a.mode==='sentinel'){
-          const direction=focus.clone().sub(a.node.position).normalize();
-          a.eye.quaternion.slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),direction),a.mode==='sentinel'?.07:.18);
-        }else{
-          a.eye.rotation.y=.32*Math.sin(now*.00043+a.phase);
-          a.eye.rotation.x=.17*Math.sin(now*.00031+a.phase*1.7);
-        }
-        a.seat.quaternion.copy(a.eye.quaternion);
-      }
-      // Nonpenetration is enforced after movement, not merely suggested by a steering force.
-      // Observer glass radius .50; 1.12 center spacing provides clearance.
-      for(let pass=0;pass<3;pass++)for(let i=0;i<swarm.length;i++)for(let j=i+1;j<swarm.length;j++){
-        const a=swarm[i].node.position,b=swarm[j].node.position;
-        const dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d2=dx*dx+dy*dy+dz*dz;
-        if(d2>=1.12*1.12)continue;
-        const d=Math.sqrt(d2),nx=d>.00001?dx/d:Math.cos(i+j),ny=d>.00001?dy/d:.5,nz=d>.00001?dz/d:Math.sin(i+j);
-        const push=(1.12-d)*.5+.0001;
-        a.x-=nx*push;a.y-=ny*push;a.z-=nz*push;
-        b.x+=nx*push;b.y+=ny*push;b.z+=nz*push;
-        a.y=safeY(a.x,a.z,a.y);b.y=safeY(b.x,b.z,b.y);
-      }
-      window.vestibuleDirty=true;
-    };
-    root.userData.updateCatchSwarm=updateCatchSwarm;
-    globalThis.SixCitiesCatch.swarm={agents:swarm,update:updateCatchSwarm};
-
-    globalThis.SnowglobeTerrain={
-      raise:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,Math.abs(amount)),
-      carve:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,-Math.abs(amount)),
-      reset:()=>globe.resetMiniature(),
-      sample:(x,z)=>globe.maps(x,z),
-      inspect:()=>globe.inspect()
-    };
-
-    // Crucible meteor/weather semantics adapted to the miniature's existing
-    // deformation authority. Autonomous, seeded, no tap or additional UI.
-    const meteorHeadGeo=new THREE.SphereGeometry(.65,7,5);
-    const meteorHeadMat=new THREE.MeshBasicMaterial({color:0xff8a4c});
-    const meteorWakeGeo=new THREE.SphereGeometry(.32,5,4);
-    const meteorWakeMat=new THREE.MeshBasicMaterial({color:0xff8a4c,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending});
-    let meteorSeed=0x51a7c1,meteorNext=0,meteorLast=0,meteorEvents=0,meteorImpacts=0;
-    const meteorActive=[],meteorPending=[];
-    const meteorRandom=()=>{meteorSeed^=meteorSeed<<13;meteorSeed^=meteorSeed>>>17;meteorSeed^=meteorSeed<<5;return(meteorSeed>>>0)/4294967296};
-    const meteorPowers=[.18,.28,.42,.62,.85,1.15,1.55];
-    const meteorPower=()=>{const u=meteorRandom(),i=u<.38?Math.floor(meteorRandom()*3):u<.82?2+Math.floor(meteorRandom()*3):4+Math.floor(meteorRandom()*3);return meteorPowers[Math.min(i,6)]};
-    function launchSnowMeteor(x,z,power,now){
-      const h=globe.groundHeight(x,z);
-      const head=new THREE.Mesh(meteorHeadGeo,meteorHeadMat);
-      const wake=new THREE.Mesh(meteorWakeGeo,meteorWakeMat.clone());
-      globe.root.add(head,wake);
-      const start=new THREE.Vector3(x+(meteorRandom()-.5)*12,h+35+meteorRandom()*12,z+(meteorRandom()-.5)*12);
-      const target=new THREE.Vector3(x,h,z);
-      head.position.copy(start);wake.position.copy(start);
-      meteorActive.push({head,wake,start,target,x,z,power,born:now,life:300+meteorRandom()*100});
-    }
-    function updateSnowMeteorWeather(now){
-      if(!meteorLast){meteorLast=now;meteorNext=now+700;}
-      // Avoid a burst of stale scheduled events after a suspended browser tab.
-      if(now-meteorLast>3000){meteorNext=now+700;meteorPending.length=0;}
-      meteorLast=now;
-      for(let i=meteorActive.length-1;i>=0;i--){
-        const m=meteorActive[i],u=Math.min(1,(now-m.born)/m.life),ease=1-(1-u)*(1-u);
-        m.head.position.copy(m.start).lerp(m.target,ease);
-        m.wake.position.copy(m.start).lerp(m.target,Math.max(0,ease-.12));
-        m.wake.scale.setScalar(1+u*2);
-        m.wake.material.opacity=.55*(1-u);
-        if(u>=1){
-          // Crucible's crater event translated to the geological heightfield.
-          // Preserve existing circular bounds and immutable bedrock.
-          globe.deform(m.x,m.z,3.5+m.power*3.8,-(.7+m.power*2.4));
-          globe.root.remove(m.head,m.wake);m.wake.material.dispose();
-          meteorActive.splice(i,1);meteorImpacts++;
-        }
-      }
-      for(let i=meteorPending.length-1;i>=0;i--)if(now>=meteorPending[i].at){
-        const p=meteorPending.splice(i,1)[0];launchSnowMeteor(p.x,p.z,p.power,now);
-      }
-      if(now<meteorNext)return;
-      meteorEvents++;
-      const u=meteorRandom(),count=u<.48?1:u<.86?2+Math.floor(meteorRandom()*4):6+Math.floor(meteorRandom()*7);
-      const spread=count===1?0:count<6?4+meteorRandom()*8:9+meteorRandom()*10;
-      const angle=meteorRandom()*Math.PI*2,r=Math.sqrt(meteorRandom())*31;
-      const cx=Math.cos(angle)*r,cz=Math.sin(angle)*r;
-      for(let i=0;i<count;i++){
-        const a=meteorRandom()*Math.PI*2,rr=Math.sqrt(meteorRandom())*spread;
-        let x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr;
-        const dist=Math.hypot(x,z);
-        if(dist>46){x*=46/dist;z*=46/dist;}
-        meteorPending.push({at:now+(i===0?0:80+i*(70+meteorRandom()*220)),x,z,power:meteorPower()});
-      }
-      meteorNext=now+180+meteorRandom()*420;
-    }
-    root.userData.meteorWeather={update:updateSnowMeteorWeather,inspect:()=>({events:meteorEvents,impacts:meteorImpacts,falling:meteorActive.length,pending:meteorPending.length})};
-    // Meteor experiment suspended for city surveying. Clear any in-flight bodies.
-    for(const m of meteorActive){globe.root.remove(m.head,m.wake);m.wake.material.dispose();}
-    meteorActive.length=0;meteorPending.length=0;
-    root.userData.meteorWeather.update=()=>{};
-    root.userData.meteorWeather.enabled=false;
-    globalThis.SnowglobeMeteorWeather=root.userData.meteorWeather;
-
-    // Portable, deterministic terrain survey: the complete authoritative height grid,
-    // geology/material samples, candidate city sites, and construction contracts.
-    const surveySnowglobe=(tap=null)=>{
-      const meta=globe.inspect(),resolution=meta.resolution,size=meta.size,half=size/2;
-      const step=size/(resolution-1),radius=49;
-      const elevations=[],geology=[],sites=[];
-      let min=Infinity,max=-Infinity;
-      for(let iz=0;iz<resolution;iz++){
-        const row=[];
-        for(let ix=0;ix<resolution;ix++){
-          const x=-half+ix*step,z=-half+iz*step,h=globe.groundHeight(x,z);
-          row.push(+h.toFixed(5));min=Math.min(min,h);max=Math.max(max,h);
-        }
-        elevations.push(row);
-      }
-      // Regular geology grid preserves substrate semantics without repeating 26k objects.
-      for(let iz=0;iz<=32;iz++)for(let ix=0;ix<=32;ix++){
-        const x=-48+ix*3,z=-48+iz*3;
-        if(Math.hypot(x,z)>radius)continue;
-        const w=globe.maps(x,z);
-        geology.push({x,z,height:+w.height.toFixed(4),bedrock:+w.bedrock.toFixed(4),
-          layer:w.exposedStratum,resistance:+w.resistance.toFixed(4),
-          mantle:w.mantle,drainage:w.drainage,retreat:w.retreat,jurisdictions:w.jurisdictions});
-      }
-      // Six preliminary low-slope candidates, not yet committed city placements.
-      for(let i=0;i<6;i++){
-        const angle=i*Math.PI/3;let best=null;
-        for(let r=12;r<=36;r+=3)for(let da=-.27;da<=.27;da+=.135){
-          const x=Math.cos(angle+da)*r,z=Math.sin(angle+da)*r,h=globe.groundHeight(x,z);
-          const slope=Math.max(...[[3,0],[-3,0],[0,3],[0,-3]].map(([dx,dz])=>Math.abs(globe.groundHeight(x+dx,z+dz)-h)/3));
-          const score=slope+.008*Math.abs(r-25);
-          if(!best||score<best.score)best={x:+x.toFixed(3),z:+z.toFixed(3),height:+h.toFixed(4),slope:+slope.toFixed(4),score};
-        }
-        sites.push({sector:i,...best});
-      }
-      // Read-only hydrology sampled in the same terrain-local frame as geology.
-      const hydrology={frame:'terrain-local',sampleSpacing:3,water:{samples:[],wetCells:0,depthMin:null,depthMax:0,depthMean:null,flowSpeedMax:0,volumeProxy:0},lava:{samples:[],wetCells:0,depthMin:null,depthMax:0,depthMean:null,flowSpeedMax:0,volumeProxy:0}};
-      for(const [kind,solver] of [['water',canyonWater],['lava',cauldronLava]]){
-        const out=hydrology[kind],flow={depth:0,u:0,v:0};let depthSum=0;
-        for(let iz=0;iz<=32;iz++)for(let ix=0;ix<=32;ix++){
-          const x=-48+ix*3,z=-48+iz*3;if(Math.hypot(x,z)>radius)continue;
-          const ground=globe.groundHeight(x,z),surfaceLocal=solver.surfaceY(x/liquidScale,z/liquidScale);
-          const wet=Number.isFinite(surfaceLocal)&&solver.flowInto(x/liquidScale,z/liquidScale,flow);
-          const surface=wet?surfaceLocal*liquidScale:null;
-          const depth=wet?Math.max(0,surface-ground):0;
-          const speed=wet?Math.hypot(flow.u,flow.v)*liquidScale:0;
-          out.samples.push({x,z,ground:+ground.toFixed(4),surface:surface===null?null:+surface.toFixed(4),depth:+depth.toFixed(4),flow:wet?[+(flow.u*liquidScale).toFixed(4),+(flow.v*liquidScale).toFixed(4)]:[0,0]});
-          if(depth>0){out.wetCells++;depthSum+=depth;out.depthMin=out.depthMin===null?depth:Math.min(out.depthMin,depth);out.depthMax=Math.max(out.depthMax,depth);out.flowSpeedMax=Math.max(out.flowSpeedMax,speed);}
-        }
-        out.sampleCount=out.samples.length;out.wetFraction=out.sampleCount?out.wetCells/out.sampleCount:0;
-        out.depthMean=out.wetCells?depthSum/out.wetCells:null;
-        out.volumeProxy=depthSum*9; // sampled area approximation, not solver-authoritative mass
-        out.solver=solver.inspect();
-      }
-      return {schema:'six-cities-snowglobe-survey-v2',coordinateFrame:{
-        x:'east',y:'up',z:'north',units:'terrain-local',center:[0,0,0],radius,
-        meshToTabletop:{scale:.025,translationY:.33},grid:{resolution,size,origin:[-half,-half],step},
-        bedrockY:-12},meta,meteorWeather:'disabled',heightRange:{min,max},
-        elevations,geology,candidateSites:sites,hydrology,
-        infrastructure:{water:{implemented:true,authority:'Fundamentals liquid solver'},
-          lava:{implemented:true,authority:'Fundamentals liquid solver'},
-          population:{implemented:false,proposed:'tagged density volumes on terrain'},
-          matterStreams:{implemented:false,proposed:'conserved source-to-sink transport with city-owned controllers'}},
-        tap};
-    };
-    const downloadSnowglobeSurvey=(tap)=>{
-      const payload=surveySnowglobe(tap);
-      payload.materialTapDiagnostics={selectedSpell:snowglobeTool,attempts:snowglobeTapHistory.map(e=>({...e})),currentLiquids:globalThis.SnowglobeLiquids?.inspect?.()};
-      const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
-      const url=URL.createObjectURL(blob),a=document.createElement('a');
-      a.href=url;a.download='six-cities-snowglobe-survey.json';document.body.append(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),2000);
-      return payload;
-    };
-    root.userData.snowglobeSurvey={inspect:surveySnowglobe,download:downloadSnowglobeSurvey};
-    globalThis.SnowglobeSurvey=root.userData.snowglobeSurvey;
-
+    const workshopSnowglobe=createSnowglobe({parent:root});
+    root.userData.snowglobeRuntime=workshopSnowglobe;
+    // Preserve Workshop's presentation-facing compatibility handles.
+    for(const key of ['snowglobe','snowglobeLiquids','snowglobeRiver','canyonInitial','snowglobeSurvey','meteorWeather','updateCatchSwarm'])root.userData[key]=workshopSnowglobe.root.userData[key];
+    Object.assign(globalThis,workshopSnowglobe.api);
     // Thoughtform: embodied possibility, deliberately not a ticket or interaction target.
     // It hangs in shared view and carries enough semantic residue to recover the idea later.
     const thoughtform=new THREE.Group();thoughtform.name='thoughtform:semantic-snapping-primitives';
@@ -4567,6 +4140,465 @@ const workshopTabletopBetwixtable=buildBetwixtable({
   }
 });
 
+
+// Snowglobe world authority: no Betwixtable, focus or Workshop ownership.
+function createSnowglobe({parent,scale=.025,seed=741}={}){
+  if(!parent)throw new Error('Snowglobe requires a scene parent');
+  const root=new THREE.Group();root.name='snowglobe:world';parent.add(root);
+  const api={},engines=[];
+    // A disposable circular world, compiled from Beyond's full geological history.
+    const globe=createBeyondTerrain({parent:root,miniature:true});
+    globe.root.scale.setScalar(scale);
+    globe.root.position.y=.33;
+    globe.mesh.name='snowglobe:deformable-geological-terrain';
+    globe.mesh.castShadow=true;
+    root.userData.snowglobe=globe;
+
+    // Finite, prefilled geological liquids. Both use the independent Fundamentals,
+    // in a shared 18-cell-space mapped onto the 104-unit miniature geology.
+    const liquidScale=104/18;
+    const liquidTerrain={
+      groundHeight:(x,z)=>globe.groundHeight(x*liquidScale,z*liquidScale)/liquidScale,
+      groundHeightExact:(x,z)=>globe.groundHeight(x*liquidScale,z*liquidScale)/liquidScale,
+      materialBoundary:(x,z)=>{
+        const r=Math.hypot(x,z),inside=r<49/liquidScale;
+        return {inside,distance:Math.abs(49/liquidScale-r),nx:r?x/r:0,nz:r?z/r:0};
+      }
+    };
+    const liquidOwner=new THREE.Group();liquidOwner.name='snowglobe:liquids';
+    liquidOwner.scale.setScalar(liquidScale);globe.root.add(liquidOwner);
+    const canyonWater=createWater({THREE,owner:liquidOwner,terrain:liquidTerrain});
+    const cauldronLava=createLava({THREE,owner:liquidOwner,terrain:liquidTerrain});
+    // Select two separated local geological lows, rather than invented flat basins.
+    const lowSites=[];
+    for(let z=-35;z<=35;z+=2)for(let x=-35;x<=35;x+=2){
+      if(x*x+z*z>36*36)continue;
+      const h=globe.groundHeight(x,z);
+      lowSites.push({x,z,h});
+    }
+    lowSites.sort((a,b)=>a.h-b.h);
+    const waterSite=lowSites[0];
+    const lavaSite=lowSites.find(p=>Math.hypot(p.x-waterSite.x,p.z-waterSite.z)>23)||lowSites[1];
+    // Begin dry. Water and lava are added only through the snowglobe spells.
+    canyonWater.setEnabled(true);cauldronLava.setEnabled(true);
+    root.userData.snowglobeLiquids={water:canyonWater,lava:cauldronLava,sites:{water:waterSite,lava:lavaSite},scale:liquidScale};
+    api.SnowglobeLiquids={
+      inspect:()=>({sites:{water:waterSite,lava:lavaSite},water:canyonWater.inspect(),lava:cauldronLava.inspect()}),
+      reset:()=>{canyonWater.reset();cauldronLava.reset()}
+    };
+
+    // Compose the existing liquid solver and bearing dynamics. No authored
+    // water ribbon, fake height field, or scripted bearing trajectory.
+    // The solver owns surface elevation and horizontal flow. Bearings own
+    // gravity, buoyancy, drag, and their individual lifetimes.
+    const riverRoot=new THREE.Group();riverRoot.name='snowglobe:solver-river-bearings';globe.root.add(riverRoot);
+    const riverHead={x:-30,z:-7},riverMouth={x:29,z:-9};
+    // Finite canyon at rest: construct the full hydrostatic state immediately.
+    // Elevation is specified in geological world coordinates, then converted
+    // to the Fundamental liquid's local solver coordinates.
+    const canyonSurfaceY=waterSite.h+15;
+    const canyonInitial=canyonWater.initializeToLevel(canyonSurfaceY/liquidScale);
+    root.userData.canyonInitial={worldY:canyonSurfaceY,...canyonInitial};
+    const BB_COUNT=260,bbGeo=new THREE.SphereGeometry(.12,6,5);
+    const bbMesh=new THREE.InstancedMesh(bbGeo,new THREE.MeshStandardMaterial({
+      color:0xd8e2d9,roughness:.48,metalness:.12
+    }),BB_COUNT);
+    bbMesh.name='river:physical-floating-bearings';bbMesh.frustumCulled=false;riverRoot.add(bbMesh);
+    const bbDummy=new THREE.Object3D(),bbFlow={depth:0,u:0,v:0};
+    const particles=Array.from({length:BB_COUNT},(_,i)=>({
+      x:riverHead.x,z:riverHead.z,y:0,vx:0,vy:0,vz:0,born:0,active:false,id:i
+    }));
+    let riverLast=performance.now(),riverSpawn=0,riverCursor=0,riverSpawned=0,riverRemoved=0;
+    const spawn=(p,now)=>{
+      const seed=p.id*2.399963+riverSpawned*.754877;
+      p.x=riverHead.x+Math.sin(seed)*.65;p.z=riverHead.z+Math.cos(seed)*.65;
+      const initialSurface=canyonWater.surfaceY(p.x/liquidScale,p.z/liquidScale);
+      p.y=Number.isFinite(initialSurface)?initialSurface*liquidScale+.2:globe.groundHeight(p.x,p.z)+.2;
+      p.vx=0;p.vy=0;p.vz=0;p.born=now;p.active=true;riverSpawned++;
+    };
+    const riverFlow={
+      update(now){
+        const dt=Math.min(.05,Math.max(0,(now-riverLast)/1000));riverLast=now;
+        riverSpawn+=dt*22;
+        while(riverSpawn>=1){riverSpawn--;spawn(particles[riverCursor++%BB_COUNT],now);}
+        let visible=0;
+        for(const p of particles){
+          if(!p.active)continue;
+          const sx=p.x/liquidScale,sz=p.z/liquidScale;
+          const waterY=canyonWater.surfaceY(sx,sz);
+          const wet=Number.isFinite(waterY)&&canyonWater.flowInto(sx,sz,bbFlow);
+          const surface=wet?waterY*liquidScale:NaN;
+          const ground=globe.groundHeight(p.x,p.z);
+          // Buoyancy is a contact force, not a prescribed bobbing animation.
+          // Spring/damping lets individual bearings settle and bob naturally.
+          p.vy-=9.2*dt;
+          if(wet&&surface>ground+.02){
+            const immersion=Math.max(0,Math.min(1,(surface-p.y+.15)/.3));
+            p.vy+=(23*immersion-2.7*p.vy*immersion)*dt;
+            const flowX=bbFlow.u*liquidScale,flowZ=bbFlow.v*liquidScale;
+            p.vx+=(flowX-p.vx)*Math.min(1,dt*3.5*immersion);
+            p.vz+=(flowZ-p.vz)*Math.min(1,dt*3.5*immersion);
+          }
+          p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;
+          if(p.y<ground+.12){
+            p.y=ground+.12;
+            if(p.vy<0)p.vy=-p.vy*.28;
+            p.vx*=Math.max(0,1-dt*2);p.vz*=Math.max(0,1-dt*2);
+          }
+          // Exit or expire; new objects always spawn at the headwater.
+          if(p.x>riverMouth.x||Math.hypot(p.x,p.z)>47||now-p.born>15000){
+            p.active=false;riverRemoved++;continue;
+          }
+          bbDummy.position.set(p.x,p.y,p.z);bbDummy.scale.setScalar(1);
+          bbDummy.updateMatrix();bbMesh.setMatrixAt(visible++,bbDummy.matrix);
+        }
+        bbMesh.count=visible;bbMesh.instanceMatrix.needsUpdate=true;
+        window.vestibuleDirty=true;
+      },
+      inspect:()=>({kind:'solver-coupled-floating-bearings',active:particles.filter(p=>p.active).length,
+        spawned:riverSpawned,removed:riverRemoved,water:canyonWater.inspect()}),
+      reset(){for(const p of particles)p.active=false;riverLast=performance.now();riverSpawn=0;}
+    };
+    root.userData.snowglobeRiver=riverFlow;api.SnowglobeRiver=riverFlow;
+
+    // Catch v0: the verified two-ring/two-rail pipe and five-ring half-cage,
+    // assembled in geological local units, then miniaturized together by globe.root.
+    // Ring joint centerline spacing .11 comes from Observer's ocular seat.
+    // The cage stays fixed; its open +Y mouth feeds the pipe's continuous -Y throat.
+    const catchCity=new THREE.Group();catchCity.name='six-cities:catch:v0';
+    const catchSite={x:12.197,z:18.070};
+    catchCity.position.set(catchSite.x,globe.groundHeight(catchSite.x,catchSite.z)+.12,catchSite.z);
+    globe.root.add(catchCity);
+    const catchMetal=brass;
+    const catchRing=(parent,name,r=.66,t=.055)=>{
+      const mesh=new THREE.Mesh(new THREE.TorusGeometry(r,t,10,40),catchMetal);
+      mesh.name=name;mesh.castShadow=true;parent.add(mesh);return mesh;
+    };
+    const catchPipe=new THREE.Group();catchPipe.name='catch:two-ring-two-rail';catchCity.add(catchPipe);
+    const pipeHeight=2.5;
+    for(const y of [0,pipeHeight]){
+      const ring=catchRing(catchPipe,'catch:pipe:ring:'+y,.66,.035);
+      ring.rotation.x=Math.PI/2;ring.position.y=y;
+    }
+    for(const x of [-.66,.66]){
+      const rail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,pipeHeight,10),catchMetal);
+      rail.name='catch:pipe:rail';rail.position.set(x,pipeHeight/2,0);rail.castShadow=true;catchPipe.add(rail);
+    }
+    const receiver=new THREE.Group();receiver.name='catch:five-ring-half-cage';
+    // Receiver's canonical missing +X dock is rotated to +Y (open sky).
+    receiver.rotation.z=Math.PI/2;
+    receiver.position.y=pipeHeight+.11+2.56;
+    catchCity.add(receiver);
+    const nodeRadius=2.56,ringRadius=.66,tube=.055;
+    const nodes={xp:new THREE.Vector3(nodeRadius,0,0),xn:new THREE.Vector3(-nodeRadius,0,0),
+      yp:new THREE.Vector3(0,nodeRadius,0),yn:new THREE.Vector3(0,-nodeRadius,0),
+      zp:new THREE.Vector3(0,0,nodeRadius),zn:new THREE.Vector3(0,0,-nodeRadius)};
+    const dockNormal=new THREE.Vector3(0,0,1);
+    for(const [id,pos] of Object.entries(nodes)){
+      if(id==='xp')continue;
+      const dock=new THREE.Group();dock.name='catch:receiver:dock:'+id;
+      dock.position.copy(pos);dock.quaternion.setFromUnitVectors(dockNormal,pos.clone().normalize());receiver.add(dock);
+      catchRing(dock,'catch:receiver:ring:'+id,ringRadius,tube);
+    }
+    const snap=(a,b)=>{
+      const p=nodes[a],toward=nodes[b].clone().sub(p).normalize(),normal=p.clone().normalize();
+      return p.clone().addScaledVector(toward.addScaledVector(normal,-toward.dot(normal)).normalize(),ringRadius);
+    };
+    const edges=[['xp','yp'],['yp','xn'],['xn','yn'],['yn','xp'],['yp','zp'],['zp','yn'],['yn','zn'],['zn','yp']];
+    for(const [a,b] of edges){
+      if(a==='xp'||b==='xp')continue;
+      const p=snap(a,b),q=snap(b,a),u=p.clone().normalize(),v=q.clone().normalize();
+      const angle=Math.acos(THREE.MathUtils.clamp(u.dot(v),-1,1)),radius=(p.length()+q.length())/2;
+      const curve=new THREE.Curve();
+      curve.getPoint=(t,target=new THREE.Vector3())=>target.copy(u).multiplyScalar(Math.sin((1-t)*angle)/Math.sin(angle))
+        .addScaledVector(v,Math.sin(t*angle)/Math.sin(angle)).normalize().multiplyScalar(radius);
+      const member=new THREE.Mesh(new THREE.TubeGeometry(curve,20,tube,8,false),catchMetal);
+      member.name='catch:receiver:shell:'+a+':'+b;member.castShadow=true;receiver.add(member);
+    }
+    catchCity.userData.sixCities={kind:'catch-v0',site:catchSite,
+      joinedRingCenterlineSpacing:.11,pipeTop:pipeHeight,cageBottom:pipeHeight+.11,
+      miniatureScale:.025,stationaryReceiver:true};
+    api.SixCitiesCatch={root:catchCity,pipe:catchPipe,receiver,
+      inspect:()=>({...catchCity.userData.sixCities,
+        groundHeight:globe.groundHeight(catchSite.x,catchSite.z),
+        worldScale:globe.root.scale.x})};
+    // Four independent propulsion modules on Catch's lateral receiver docks.
+    // The open sky mouth and pipe throat remain unobstructed.
+    if(api.SixCitiesCatch?.receiver){
+      const engines=[];
+      for(const [i,id] of ['yp','yn','zp','zn'].entries()){
+        const dock=api.SixCitiesCatch.receiver.getObjectByName('catch:receiver:dock:'+id);
+        if(!dock)throw new Error('Catch propulsion dock missing: '+id);
+        const engine=makePropulsionModule({name:'catch:propulsion:'+id,parent:dock,registry:engines});
+        engine.phase=i*Math.PI/2+.17;
+        engine.tilt=i*2.399963229728653+.31;
+        engines.push(engine);
+      }
+      api.SixCitiesCatch.propulsion=engines;
+    }
+
+
+    // Twelve independent observer eyes: hover, wander, return. Local geological units.
+    const swarm=[];
+    const swarmRoot=new THREE.Group();swarmRoot.name='catch:observer-swarm';globe.root.add(swarmRoot);
+    let swarmSeed=seed;const rand=()=>{swarmSeed=(Math.imul(swarmSeed,1664525)+1013904223)>>>0;return swarmSeed/4294967296};
+    const home=new THREE.Vector3(catchSite.x,catchCity.position.y+7.6,catchSite.z);
+    const safeY=(x,z,y)=>Math.max(y,globe.groundHeight(x,z)+1.25);
+    const pick=(a,homeward=false)=>{
+      const angle=rand()*Math.PI*2,radius=homeward?2+rand()*4:5+rand()*13;
+      const x=catchSite.x+Math.cos(angle)*radius,z=catchSite.z+Math.sin(angle)*radius;
+      return new THREE.Vector3(x,safeY(x,z,homeward?home.y+rand()*3:globe.groundHeight(x,z)+3+rand()*8),z);
+    };
+    for(let i=0;i<12;i++){
+      const node=new THREE.Group();node.name='catch:observer:'+i;swarmRoot.add(node);
+      buildObserverPresentation(node);
+      const angle=i*Math.PI*2/12,rad=3.2+(i%3)*1.2;
+      node.position.set(catchSite.x+Math.cos(angle)*rad,home.y+(i%4)*1.25,catchSite.z+Math.sin(angle)*rad);
+      const eye=node.userData.observerEye,seat=node.userData.observerOcularSeat;
+      swarm.push({node,eye,seat,phase:rand()*6.283,mode:'hover',until:1500+rand()*7000,
+        target:pick(null,true),speed:2.0+rand()*1.4});
+    }
+    let swarmLast=0;
+    const focus=new THREE.Vector3(),curiosity={phase:'idle'};
+    const updateCatchSwarm=(now)=>{
+      const dt=Math.min(.05,Math.max(0,(now-swarmLast)/1000));swarmLast=now;
+      const cycle=now%44000,phase=cycle<17000?'idle':cycle<34000?'investigate':'dismiss';
+      if(phase!==curiosity.phase){
+        curiosity.phase=phase;
+        for(let i=1;i<swarm.length;i++){
+          const a=swarm[i];
+          if(phase==='investigate'){a.mode='investigate';a.until=Infinity;}
+          else if(phase==='dismiss'){a.mode='return';a.target=pick(a,true);a.until=Infinity;a.speed=7;}
+          else {a.mode='hover';a.until=now+2000+rand()*4000;a.speed=2.5;}
+        }
+      }
+      let n=0;focus.set(0,0,0);
+      for(const p of particles)if(p.active){focus.x+=p.x;focus.y+=p.y;focus.z+=p.z;n++;}
+      if(n)focus.multiplyScalar(1/n);
+      else focus.set(riverHead.x,globe.groundHeight(riverHead.x,riverHead.z)+3,riverHead.z);
+      focus.y=safeY(focus.x,focus.z,focus.y+3);
+      for(let i=1;i<swarm.length;i++)if(phase==='investigate'){
+        const a=swarm[i],angle=(i-1)*Math.PI*2/11+now*.00023,r=2.4+(i%3)*.6;
+        const x=focus.x+Math.cos(angle)*r,z=focus.z+Math.sin(angle)*r;
+        a.target.set(x,safeY(x,z,focus.y+(i%4)*.65),z);a.speed=12;
+      }
+      swarm[0].mode='sentinel';swarm[0].until=Infinity;
+      swarm[0].target.set(catchSite.x,home.y+3,catchSite.z);
+      for(let i=0;i<swarm.length;i++){
+        const a=swarm[i];
+        if(now>=a.until&&i!==0&&a.mode!=='investigate'){
+          if(a.mode==='hover'){a.mode='wander';a.target=pick(a);a.until=now+6000+rand()*9000;}
+          else if(a.mode==='wander'){a.mode='return';a.target=pick(a,true);a.until=Infinity;}
+          else {a.mode='hover';a.until=now+4000+rand()*5000;}
+        }
+        if(a.mode!=='hover'){
+          const delta=a.target.clone().sub(a.node.position),distance=delta.length();
+          if(a.mode==='return'&&distance<.35){a.mode='hover';a.until=now+4000+rand()*5000;}
+          else if(distance>.001){
+            const step=Math.min(distance,a.speed*dt);a.node.position.addScaledVector(delta,step/distance);
+          }
+        }else{
+          a.node.position.y+=Math.sin(now*.0011+a.phase)*dt*.12;
+        }
+        a.node.position.y=safeY(a.node.position.x,a.node.position.z,a.node.position.y);
+        if(a.mode==='investigate'||a.mode==='sentinel'){
+          const direction=focus.clone().sub(a.node.position).normalize();
+          a.eye.quaternion.slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),direction),a.mode==='sentinel'?.07:.18);
+        }else{
+          a.eye.rotation.y=.32*Math.sin(now*.00043+a.phase);
+          a.eye.rotation.x=.17*Math.sin(now*.00031+a.phase*1.7);
+        }
+        a.seat.quaternion.copy(a.eye.quaternion);
+      }
+      // Nonpenetration is enforced after movement, not merely suggested by a steering force.
+      // Observer glass radius .50; 1.12 center spacing provides clearance.
+      for(let pass=0;pass<3;pass++)for(let i=0;i<swarm.length;i++)for(let j=i+1;j<swarm.length;j++){
+        const a=swarm[i].node.position,b=swarm[j].node.position;
+        const dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d2=dx*dx+dy*dy+dz*dz;
+        if(d2>=1.12*1.12)continue;
+        const d=Math.sqrt(d2),nx=d>.00001?dx/d:Math.cos(i+j),ny=d>.00001?dy/d:.5,nz=d>.00001?dz/d:Math.sin(i+j);
+        const push=(1.12-d)*.5+.0001;
+        a.x-=nx*push;a.y-=ny*push;a.z-=nz*push;
+        b.x+=nx*push;b.y+=ny*push;b.z+=nz*push;
+        a.y=safeY(a.x,a.z,a.y);b.y=safeY(b.x,b.z,b.y);
+      }
+      window.vestibuleDirty=true;
+    };
+    root.userData.updateCatchSwarm=updateCatchSwarm;
+    api.SixCitiesCatch.swarm={agents:swarm,update:updateCatchSwarm};
+
+    api.SnowglobeTerrain={
+      raise:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,Math.abs(amount)),
+      carve:(x,z,radius=7,amount=2)=>globe.deform(x,z,radius,-Math.abs(amount)),
+      reset:()=>globe.resetMiniature(),
+      sample:(x,z)=>globe.maps(x,z),
+      inspect:()=>globe.inspect()
+    };
+
+    // Crucible meteor/weather semantics adapted to the miniature's existing
+    // deformation authority. Autonomous, seeded, no tap or additional UI.
+    const meteorHeadGeo=new THREE.SphereGeometry(.65,7,5);
+    const meteorHeadMat=new THREE.MeshBasicMaterial({color:0xff8a4c});
+    const meteorWakeGeo=new THREE.SphereGeometry(.32,5,4);
+    const meteorWakeMat=new THREE.MeshBasicMaterial({color:0xff8a4c,transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending});
+    let meteorSeed=0x51a7c1,meteorNext=0,meteorLast=0,meteorEvents=0,meteorImpacts=0;
+    const meteorActive=[],meteorPending=[];
+    const meteorRandom=()=>{meteorSeed^=meteorSeed<<13;meteorSeed^=meteorSeed>>>17;meteorSeed^=meteorSeed<<5;return(meteorSeed>>>0)/4294967296};
+    const meteorPowers=[.18,.28,.42,.62,.85,1.15,1.55];
+    const meteorPower=()=>{const u=meteorRandom(),i=u<.38?Math.floor(meteorRandom()*3):u<.82?2+Math.floor(meteorRandom()*3):4+Math.floor(meteorRandom()*3);return meteorPowers[Math.min(i,6)]};
+    function launchSnowMeteor(x,z,power,now){
+      const h=globe.groundHeight(x,z);
+      const head=new THREE.Mesh(meteorHeadGeo,meteorHeadMat);
+      const wake=new THREE.Mesh(meteorWakeGeo,meteorWakeMat.clone());
+      globe.root.add(head,wake);
+      const start=new THREE.Vector3(x+(meteorRandom()-.5)*12,h+35+meteorRandom()*12,z+(meteorRandom()-.5)*12);
+      const target=new THREE.Vector3(x,h,z);
+      head.position.copy(start);wake.position.copy(start);
+      meteorActive.push({head,wake,start,target,x,z,power,born:now,life:300+meteorRandom()*100});
+    }
+    function updateSnowMeteorWeather(now){
+      if(!meteorLast){meteorLast=now;meteorNext=now+700;}
+      // Avoid a burst of stale scheduled events after a suspended browser tab.
+      if(now-meteorLast>3000){meteorNext=now+700;meteorPending.length=0;}
+      meteorLast=now;
+      for(let i=meteorActive.length-1;i>=0;i--){
+        const m=meteorActive[i],u=Math.min(1,(now-m.born)/m.life),ease=1-(1-u)*(1-u);
+        m.head.position.copy(m.start).lerp(m.target,ease);
+        m.wake.position.copy(m.start).lerp(m.target,Math.max(0,ease-.12));
+        m.wake.scale.setScalar(1+u*2);
+        m.wake.material.opacity=.55*(1-u);
+        if(u>=1){
+          // Crucible's crater event translated to the geological heightfield.
+          // Preserve existing circular bounds and immutable bedrock.
+          globe.deform(m.x,m.z,3.5+m.power*3.8,-(.7+m.power*2.4));
+          globe.root.remove(m.head,m.wake);m.wake.material.dispose();
+          meteorActive.splice(i,1);meteorImpacts++;
+        }
+      }
+      for(let i=meteorPending.length-1;i>=0;i--)if(now>=meteorPending[i].at){
+        const p=meteorPending.splice(i,1)[0];launchSnowMeteor(p.x,p.z,p.power,now);
+      }
+      if(now<meteorNext)return;
+      meteorEvents++;
+      const u=meteorRandom(),count=u<.48?1:u<.86?2+Math.floor(meteorRandom()*4):6+Math.floor(meteorRandom()*7);
+      const spread=count===1?0:count<6?4+meteorRandom()*8:9+meteorRandom()*10;
+      const angle=meteorRandom()*Math.PI*2,r=Math.sqrt(meteorRandom())*31;
+      const cx=Math.cos(angle)*r,cz=Math.sin(angle)*r;
+      for(let i=0;i<count;i++){
+        const a=meteorRandom()*Math.PI*2,rr=Math.sqrt(meteorRandom())*spread;
+        let x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr;
+        const dist=Math.hypot(x,z);
+        if(dist>46){x*=46/dist;z*=46/dist;}
+        meteorPending.push({at:now+(i===0?0:80+i*(70+meteorRandom()*220)),x,z,power:meteorPower()});
+      }
+      meteorNext=now+180+meteorRandom()*420;
+    }
+    root.userData.meteorWeather={update:updateSnowMeteorWeather,inspect:()=>({events:meteorEvents,impacts:meteorImpacts,falling:meteorActive.length,pending:meteorPending.length})};
+    // Meteor experiment suspended for city surveying. Clear any in-flight bodies.
+    for(const m of meteorActive){globe.root.remove(m.head,m.wake);m.wake.material.dispose();}
+    meteorActive.length=0;meteorPending.length=0;
+    root.userData.meteorWeather.update=()=>{};
+    root.userData.meteorWeather.enabled=false;
+    api.SnowglobeMeteorWeather=root.userData.meteorWeather;
+
+    // Portable, deterministic terrain survey: the complete authoritative height grid,
+    // geology/material samples, candidate city sites, and construction contracts.
+    const surveySnowglobe=(tap=null)=>{
+      const meta=globe.inspect(),resolution=meta.resolution,size=meta.size,half=size/2;
+      const step=size/(resolution-1),radius=49;
+      const elevations=[],geology=[],sites=[];
+      let min=Infinity,max=-Infinity;
+      for(let iz=0;iz<resolution;iz++){
+        const row=[];
+        for(let ix=0;ix<resolution;ix++){
+          const x=-half+ix*step,z=-half+iz*step,h=globe.groundHeight(x,z);
+          row.push(+h.toFixed(5));min=Math.min(min,h);max=Math.max(max,h);
+        }
+        elevations.push(row);
+      }
+      // Regular geology grid preserves substrate semantics without repeating 26k objects.
+      for(let iz=0;iz<=32;iz++)for(let ix=0;ix<=32;ix++){
+        const x=-48+ix*3,z=-48+iz*3;
+        if(Math.hypot(x,z)>radius)continue;
+        const w=globe.maps(x,z);
+        geology.push({x,z,height:+w.height.toFixed(4),bedrock:+w.bedrock.toFixed(4),
+          layer:w.exposedStratum,resistance:+w.resistance.toFixed(4),
+          mantle:w.mantle,drainage:w.drainage,retreat:w.retreat,jurisdictions:w.jurisdictions});
+      }
+      // Six preliminary low-slope candidates, not yet committed city placements.
+      for(let i=0;i<6;i++){
+        const angle=i*Math.PI/3;let best=null;
+        for(let r=12;r<=36;r+=3)for(let da=-.27;da<=.27;da+=.135){
+          const x=Math.cos(angle+da)*r,z=Math.sin(angle+da)*r,h=globe.groundHeight(x,z);
+          const slope=Math.max(...[[3,0],[-3,0],[0,3],[0,-3]].map(([dx,dz])=>Math.abs(globe.groundHeight(x+dx,z+dz)-h)/3));
+          const score=slope+.008*Math.abs(r-25);
+          if(!best||score<best.score)best={x:+x.toFixed(3),z:+z.toFixed(3),height:+h.toFixed(4),slope:+slope.toFixed(4),score};
+        }
+        sites.push({sector:i,...best});
+      }
+      // Read-only hydrology sampled in the same terrain-local frame as geology.
+      const hydrology={frame:'terrain-local',sampleSpacing:3,water:{samples:[],wetCells:0,depthMin:null,depthMax:0,depthMean:null,flowSpeedMax:0,volumeProxy:0},lava:{samples:[],wetCells:0,depthMin:null,depthMax:0,depthMean:null,flowSpeedMax:0,volumeProxy:0}};
+      for(const [kind,solver] of [['water',canyonWater],['lava',cauldronLava]]){
+        const out=hydrology[kind],flow={depth:0,u:0,v:0};let depthSum=0;
+        for(let iz=0;iz<=32;iz++)for(let ix=0;ix<=32;ix++){
+          const x=-48+ix*3,z=-48+iz*3;if(Math.hypot(x,z)>radius)continue;
+          const ground=globe.groundHeight(x,z),surfaceLocal=solver.surfaceY(x/liquidScale,z/liquidScale);
+          const wet=Number.isFinite(surfaceLocal)&&solver.flowInto(x/liquidScale,z/liquidScale,flow);
+          const surface=wet?surfaceLocal*liquidScale:null;
+          const depth=wet?Math.max(0,surface-ground):0;
+          const speed=wet?Math.hypot(flow.u,flow.v)*liquidScale:0;
+          out.samples.push({x,z,ground:+ground.toFixed(4),surface:surface===null?null:+surface.toFixed(4),depth:+depth.toFixed(4),flow:wet?[+(flow.u*liquidScale).toFixed(4),+(flow.v*liquidScale).toFixed(4)]:[0,0]});
+          if(depth>0){out.wetCells++;depthSum+=depth;out.depthMin=out.depthMin===null?depth:Math.min(out.depthMin,depth);out.depthMax=Math.max(out.depthMax,depth);out.flowSpeedMax=Math.max(out.flowSpeedMax,speed);}
+        }
+        out.sampleCount=out.samples.length;out.wetFraction=out.sampleCount?out.wetCells/out.sampleCount:0;
+        out.depthMean=out.wetCells?depthSum/out.wetCells:null;
+        out.volumeProxy=depthSum*9; // sampled area approximation, not solver-authoritative mass
+        out.solver=solver.inspect();
+      }
+      return {schema:'six-cities-snowglobe-survey-v2',coordinateFrame:{
+        x:'east',y:'up',z:'north',units:'terrain-local',center:[0,0,0],radius,
+        meshToTabletop:{scale:.025,translationY:.33},grid:{resolution,size,origin:[-half,-half],step},
+        bedrockY:-12},meta,meteorWeather:'disabled',heightRange:{min,max},
+        elevations,geology,candidateSites:sites,hydrology,
+        infrastructure:{water:{implemented:true,authority:'Fundamentals liquid solver'},
+          lava:{implemented:true,authority:'Fundamentals liquid solver'},
+          population:{implemented:false,proposed:'tagged density volumes on terrain'},
+          matterStreams:{implemented:false,proposed:'conserved source-to-sink transport with city-owned controllers'}},
+        tap};
+    };
+    const downloadSnowglobeSurvey=(tap)=>{
+      const payload=surveySnowglobe(tap);
+      payload.materialTapDiagnostics={selectedSpell:snowglobeTool,attempts:snowglobeTapHistory.map(e=>({...e})),currentLiquids:api.SnowglobeLiquids?.inspect?.()};
+      const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url;a.download='six-cities-snowglobe-survey.json';document.body.append(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      return payload;
+    };
+    root.userData.snowglobeSurvey={inspect:surveySnowglobe,download:downloadSnowglobeSurvey};
+    api.SnowglobeSurvey=root.userData.snowglobeSurvey;
+
+
+  let last=null,time=0,disposed=false;
+  function update(now){if(disposed)return;time+=last===null?0:Math.min(100,Math.max(0,now-last));last=now;
+    root.userData.snowglobeLiquids.water.update(time);root.userData.snowglobeLiquids.lava.update(time);
+    root.userData.snowglobeRiver.update(time);root.userData.updateCatchSwarm(time);root.userData.meteorWeather.update(time);
+    for(const m of engines){m.gimbal.rotation.set(.34*Math.sin(time*.00043+m.tilt),.72*Math.sin(time*.00031+m.phase),.18*Math.sin(time*.00053+m.phase),'YXZ');m.rotor.rotation.z=time*.010+m.phase;}
+  }
+  function reset(){api.SnowglobeTerrain.reset();api.SnowglobeLiquids.reset();api.SnowglobeRiver.reset();time=0;last=null;}
+  function dispose(){if(disposed)return;disposed=true;parent.remove(root);}
+  return {root,api,update,reset,dispose,inspect:()=>({time,terrain:api.SnowglobeTerrain.inspect(),liquids:api.SnowglobeLiquids.inspect(),river:api.SnowglobeRiver.inspect()})};
+}
+
+// The presentation is optional; the Snowglobe world does not know its host.
+const betwixtSnowglobeHost=buildBetwixtable({name:'snowglobe',parent:betwixtPlace,padding:.28,build(root){
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(1.42,.105,10,48),brass);rim.rotation.x=Math.PI/2;root.add(rim);
+  const glass=new THREE.Mesh(new THREE.CylinderGeometry(1.31,1.31,.045,48),glassFace);root.add(glass);
+}});
+const betwixtSnowglobe=createSnowglobe({parent:betwixtSnowglobeHost.userData.betwixtable.presentation});
+betwixtSnowglobeHost.userData.betwixtable.fit();
+registerRelationalNode('snowglobe-eye',{object:betwixtSnowglobeHost,bounds:()=>betwixtSnowglobeHost.userData.betwixtable.bounds()});
+relateSpatial({subject:'snowglobe-eye',kind:'above',reference:'observer-eye',gap:2.0});
 
 /* FAILURE TO LAUNCH — preserved collaboration specimen.
 
@@ -6624,7 +6656,7 @@ renderer.setAnimationLoop((now)=>{
   if(focusedWorkshopObject===workshopTabletopBetwixtable){
     if(snowglobeFocusLastReal!==null)snowglobeFocusTime+=Math.min(100,Math.max(0,now-snowglobeFocusLastReal));
     snowglobeFocusLastReal=now;
-    globalThis.SnowglobeMeteorWeather?.update(snowglobeFocusTime);
+    // Focus does not control Snowglobe simulation.
   }else snowglobeFocusLastReal=null;
   workshopTabletopBetwixtable.userData.betwixtable.presentation.children.find(o=>o.name==='thoughtform:neptunian-caretaker-carrier')?.userData.animate?.(now);
   jovianBetwixtable.userData.betwixtable.presentation.userData.jovian?.update(now);
@@ -6653,13 +6685,13 @@ renderer.setAnimationLoop((now)=>{
     window.vestibuleDirty=true;
   }
   updateObserverEye(now);updateObserverVesselOrbiter(now);updatePropulsionModules(now);
-  workshopTabletopBetwixtable.userData.betwixtable.presentation.userData.updateCatchSwarm?.(now);
+  workshopTabletopBetwixtable.userData.betwixtable.presentation.userData.snowglobeRuntime?.update(now);
+  betwixtSnowglobe.update(now);
   updateWorkshopCrucibleOrb(now);
   updateWorldD20(now);
 
   const snowglobeLiquids=workshopTabletopBetwixtable.userData.betwixtable.presentation.userData.snowglobeLiquids;
-  if(snowglobeLiquids){snowglobeLiquids.water.update(now);snowglobeLiquids.lava.update(now);window.vestibuleDirty=true;}
-  workshopTabletopBetwixtable.userData.betwixtable.presentation.userData.snowglobeRiver?.update(now);
+  // Liquids and bearings are advanced by each Snowglobe instance.
   updateWorkshop(now);
   syncSnowglobeSpells();
   if(workshopCrucibleEnabled){
