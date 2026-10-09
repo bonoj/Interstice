@@ -68,7 +68,7 @@ select{width:100%;padding:0 12px;appearance:auto}
 #relational-sketch canvas{width:100%;height:100%;display:block;touch-action:none}
 </style>
 </head>
-<body data-repository-build="17ff9d00" data-repository-sha="17ff9d005a2df87f276ab32c807e840ef94eaaf7"><script>globalThis.__REPOSITORY_SHA__="17ff9d005a2df87f276ab32c807e840ef94eaaf7";globalThis.__REPOSITORY_BUILD__="17ff9d00";</script><script>(()=>{
+<body data-repository-build="05c22ab6" data-repository-sha="05c22ab6d4c21eeec23c8a72f10a9df60ee1399d"><script>globalThis.__REPOSITORY_SHA__="05c22ab6d4c21eeec23c8a72f10a9df60ee1399d";globalThis.__REPOSITORY_BUILD__="05c22ab6";</script><script>(()=>{
   const place={sigil:"🌀",title:"BETWIXT"};
   const spells={
     temporary:[],
@@ -6695,7 +6695,8 @@ renderer.setAnimationLoop((now)=>{
   const workshopSnowglobeRuntime=workshopTabletopBetwixtable.userData.betwixtable.presentation.userData.snowglobeRuntime;
   if(legacyWorkshop.visible)workshopSnowglobeRuntime?.update(now);
   else workshopSnowglobeRuntime?.suspend();
-  betwixtSnowglobe.update(now);
+  if(betwixtPlace.visible)betwixtSnowglobe.update(now);
+  else betwixtSnowglobe.suspend();
   updateWorkshopCrucibleOrb(now);
   updateWorldD20(now);
 
